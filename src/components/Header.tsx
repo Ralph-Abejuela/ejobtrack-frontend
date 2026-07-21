@@ -8,10 +8,18 @@ export default function Header() {
 
 	return (
 		<header className="flex items-center justify-between border-b px-4 py-3">
-			<div className="flex items-center gap-4">
+			<div className="flex items-center gap-6">
 				<Link to="/" className="text-lg font-bold tracking-tight">
 					ejobtrack
 				</Link>
+				<nav className="flex items-center gap-4 text-sm font-medium">
+					<Link
+						to="/jobs"
+						className="text-muted-foreground hover:text-foreground transition-colors [&.active]:text-foreground"
+					>
+						Jobs
+					</Link>
+				</nav>
 			</div>
 
 			<div className="flex items-center gap-3">

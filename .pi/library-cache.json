@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "version": 1
+  },
+  "libraries": {
+    "@tanstack/react-router": {
+      "summary": "Modern and scalable routing for React applications",
+      "description": "Modern and scalable routing for React applications",
+      "homepage": "https://tanstack.com/router",
+      "cachedAt": 1784623163102
+    },
+    "react": {
+      "summary": "React is a JavaScript library for building user interfaces.",
+      "description": "React is a JavaScript library for building user interfaces.",
+      "homepage": "https://react.dev/",
+      "cachedAt": 1784623164046
+    },
+    "lucide-react": {
+      "summary": "A Lucide icon library package for React applications.",
+      "description": "A Lucide icon library package for React applications.",
+      "homepage": "https://lucide.dev",
+      "cachedAt": 1784623164142
+    }
+  }
+}
