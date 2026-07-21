@@ -326,8 +326,13 @@ export const genericParser: JobPlatformParser = {
 	platform: "generic",
 	fromAddresses: [], // Matches all senders — invoked as fallback
 	parse(email) {
+		// Merge bodyClean (sanitized HTML) into body for richer text scanning
+		const richBody = email.bodyClean
+			? `${email.body} ${email.bodyClean}`
+			: email.body;
+
 		// Skip if not a job-related email
-		if (!isJobEmail(email.subject, email.body)) return null;
+		if (!isJobEmail(email.subject, richBody)) return null;
 
 		const rawEmail = extractEmail(email.from);
 		const domain = extractDomain(rawEmail);
@@ -336,12 +341,12 @@ export const genericParser: JobPlatformParser = {
 			domain,
 			displayName,
 			email.subject,
-			email.body,
+			richBody,
 		);
-		const status = scoreStatus(email.subject, email.body);
+		const status = scoreStatus(email.subject, richBody);
 		const jobTitle =
-			extractJobTitle(email.subject, email.body) || "Unknown Position";
-		const url = extractAnyUrl(email.body);
+			extractJobTitle(email.subject, richBody) || "Unknown Position";
+		const url = extractAnyUrl(richBody);
 
 		return [
 			{

@@ -13,7 +13,7 @@ export const indeedParser: JobPlatformParser = {
 	fromAddresses: ["indeedapply@indeed.com"],
 
 	parse(email) {
-		const { subject, bodyHtml } = email;
+		const { subject, bodyHtml, bodyClean } = email;
 
 		// Confirm it's an Indeed application email via subject
 		const indeedMatch = subject.match(/^Indeed Application:\s*(.+)/i);
@@ -53,7 +53,7 @@ export const indeedParser: JobPlatformParser = {
 		if (!company) company = "Unknown Company";
 
 		// ── Extract URL ──
-		const url = extractIndeedUrl(bodyHtml ?? email.body);
+		const url = extractIndeedUrl(bodyHtml ?? bodyClean ?? email.body);
 
 		return [
 			{

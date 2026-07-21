@@ -36,7 +36,7 @@ export const jobstreetParser: JobPlatformParser = {
 			return parseBulkActivity(email);
 		}
 
-		const { subject, snippet, body } = email;
+		const { subject, snippet, body, bodyClean } = email;
 
 		let jobTitle = "";
 		let company = "";
@@ -44,7 +44,9 @@ export const jobstreetParser: JobPlatformParser = {
 
 		const lowerSubject = subject.toLowerCase().replace(/\s+/g, " ");
 		const lowerSnippet = snippet.toLowerCase().replace(/\s+/g, " ");
-		const lowerBody = body.toLowerCase().replace(/\s+/g, " ");
+		// Merge bodyClean (sanitized HTML) into body for richer text scanning
+		const richBody = bodyClean ? `${body} ${bodyClean}` : body;
+		const lowerBody = richBody.toLowerCase().replace(/\s+/g, " ");
 
 		// ── Status detection: check subject first ──
 

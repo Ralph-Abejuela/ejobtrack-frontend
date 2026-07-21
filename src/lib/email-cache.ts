@@ -118,8 +118,14 @@ export async function updateEmailBody(
 	body: string,
 	bodyHtml: string,
 	bodyType: "text/plain" | "text/html" | "unknown",
+	bodyClean?: string,
 ): Promise<void> {
-	await db.emails.update(id, { body, bodyHtml, bodyType });
+	await db.emails.update(id, {
+		body,
+		bodyHtml,
+		bodyClean: bodyClean || undefined,
+		bodyType,
+	});
 }
 
 /** Clear cached emails for a specific user. */

@@ -18,7 +18,9 @@ const IGNORE_SENDERS = [
 	"LiNa Recommendations <noreply@e.jobstreet.com>",
 	"LinkedIn <billing-noreply@linkedin.com>",
 	"SEEK Pass Support <support@seekpass.co>",
-	"LinkedIn <career-interests-noreply@linkedin.com>"
+	"LinkedIn <career-interests-noreply@linkedin.com>",
+	"LinkedIn <messages-noreply@linkedin.com>",
+	"DigitalOcean <team@info.digitalocean.com>",
 ];
 
 /** Registry of all platform-specific parsers. Add new parsers here. */
@@ -62,8 +64,7 @@ export function parseEmail(email: {
 	// Skip known non-job senders (full From header match)
 	if (
 		IGNORE_SENDERS.some(
-			(s) => s.toLowerCase().match(email.from.trim().toLowerCase()),
-		)
+			(s) => email.from.trim().toLowerCase().match(s.toLowerCase()))
 	) {
 		return null;
 	}

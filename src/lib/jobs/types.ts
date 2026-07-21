@@ -75,6 +75,8 @@ export interface JobPlatformParser {
 		snippet: string;
 		body: string;
 		bodyHtml?: string;
+		/** html-to-text of bodyHtml — rich content even for emails with text/plain */
+		bodyClean?: string;
 		id: string;
 		internalDate: string;
 	}):

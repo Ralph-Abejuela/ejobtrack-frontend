@@ -57,10 +57,13 @@ export default function GmailReader() {
 
 			setLoadingBodyId(emailId);
 			try {
-				const { body, bodyType } = await fetchMessageBody(accessToken, emailId);
+				const { body, bodyHtml, bodyType } = await fetchMessageBody(
+					accessToken,
+					emailId,
+				);
 				setBodies((prev) => ({ ...prev, [emailId]: body }));
 				// Persist in IndexedDB for next session
-				updateEmailBody(emailId, body, bodyType);
+				updateEmailBody(emailId, body, bodyHtml, bodyType);
 			} catch (err) {
 				console.error("Failed to load body", err);
 			} finally {

@@ -58,8 +58,11 @@ export interface ParsedEmail {
 	to: string;
 	date: string;
 	snippet: string;
+	/** text/plain body (when available) or html-to-text of bodyHtml as fallback */
 	body: string;
 	bodyHtml?: string;
+	/** html-to-text of bodyHtml — rich content even when text/plain is available */
+	bodyClean?: string;
 	bodyType: "text/plain" | "text/html" | "unknown";
 	labelIds: string[];
 	internalDate: string;
@@ -91,6 +94,7 @@ function decodeBase64(data: string): string {
 function extractBody(part: GmailMessagePart): {
 	body: string;
 	bodyHtml: string;
+	bodyClean: string;
 	type: "text/plain" | "text/html" | "unknown";
 } {
 	let textPlain = "";
@@ -111,25 +115,34 @@ function extractBody(part: GmailMessagePart): {
 
 	walk(part);
 
-	// Prefer text/plain (cleanest). Store bodyHtml for parsers that need rich HTML (e.g. Indeed).
-	if (textPlain) {
-		return { body: textPlain, bodyHtml: textHtml, type: "text/plain" };
-	}
+	const bodyClean = textHtml ? htmlToText(textHtml, { wordwrap: false }) : "";
 
-	if (textHtml) {
+	// Prefer rich HTML content (cleaned) over text/plain for display.
+	// bodyClean is always available when HTML exists.
+	if (bodyClean) {
 		return {
-			body: htmlToText(textHtml, { wordwrap: false }),
+			body: bodyClean,
 			bodyHtml: textHtml,
+			bodyClean,
 			type: "text/html",
 		};
 	}
 
-	return { body: "", bodyHtml: "", type: "unknown" };
+	if (textPlain) {
+		return {
+			body: textPlain,
+			bodyHtml: textHtml,
+			bodyClean: "",
+			type: "text/plain",
+		};
+	}
+
+	return { body: "", bodyHtml: "", bodyClean: "", type: "unknown" };
 }
 
 export function parseMessage(msg: GmailMessage): ParsedEmail {
 	const headers = msg.payload.headers;
-	const { body, bodyHtml, type } = extractBody(msg.payload);
+	const { body, bodyHtml, bodyClean, type } = extractBody(msg.payload);
 
 	return {
 		id: msg.id,
@@ -141,6 +154,7 @@ export function parseMessage(msg: GmailMessage): ParsedEmail {
 		snippet: msg.snippet,
 		body,
 		bodyHtml: bodyHtml || undefined,
+		bodyClean: bodyClean || undefined,
 		bodyType: type,
 		labelIds: msg.labelIds,
 		internalDate: msg.internalDate,
