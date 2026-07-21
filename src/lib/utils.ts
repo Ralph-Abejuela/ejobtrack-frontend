@@ -42,3 +42,29 @@ export function stringSimilarity(a: string, b: string): number {
 	const total = aNorm.length - 1 + (bNorm.length - 1);
 	return (2 * intersection) / total;
 }
+
+export function formatDate(dateStr: string): string {
+	if (!dateStr) return "";
+	try {
+		const date = new Date(dateStr);
+		if (isNaN(date.getTime())) return dateStr;
+		return date.toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
+	} catch {
+		return dateStr;
+	}
+}
+
+export function formatTimeAgo(ms: number): string {
+	const delta = Date.now() - ms;
+	const mins = Math.floor(delta / 60000);
+	if (mins < 1) return "just now";
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}

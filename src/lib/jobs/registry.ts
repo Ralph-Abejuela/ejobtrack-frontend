@@ -18,6 +18,7 @@ const IGNORE_SENDERS = [
 	"LiNa Recommendations <noreply@e.jobstreet.com>",
 	"LinkedIn <billing-noreply@linkedin.com>",
 	"SEEK Pass Support <support@seekpass.co>",
+	"LinkedIn <career-interests-noreply@linkedin.com>"
 ];
 
 /** Registry of all platform-specific parsers. Add new parsers here. */

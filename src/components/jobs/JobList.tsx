@@ -1,0 +1,110 @@
+import type { JobApplication } from "@/lib/jobs/types";
+import { JobStatus } from "@/lib/jobs/types";
+import { STCFG, STATUS_ORDER } from "./config";
+import JobCard from "./JobCard";
+
+interface JobListProps {
+	jobs: JobApplication[];
+	grouped: Record<string, JobApplication[]>;
+	expandedJob: string | null;
+	activeEmailId: string | null;
+	selectedEmail: { subject: string; from: string; body: string } | null;
+	fetchingEmail: boolean;
+	onToggleExpand: (jobId: string) => void;
+	onSelectEmail: (id: string | null) => void;
+	onStatusUpdate: (jobId: string, status: JobStatus) => void;
+	syncing: boolean;
+	lastSyncTime: number;
+	newCount: number;
+}
+
+export default function JobList({
+	jobs,
+	grouped,
+	expandedJob,
+	activeEmailId,
+	selectedEmail,
+	fetchingEmail,
+	onToggleExpand,
+	onSelectEmail,
+	onStatusUpdate,
+	syncing,
+	lastSyncTime,
+	newCount,
+}: JobListProps) {
+	if (jobs.length === 0 && !syncing) {
+		return (
+			<div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+				No job applications tracked yet. Click Load Older Emails to fetch from
+				your inbox.
+			</div>
+		);
+	}
+
+	return (
+		<>
+			{STATUS_ORDER.map((status) => {
+				const sectionJobs = grouped[status];
+				if (sectionJobs.length === 0) return null;
+				const cfg = STCFG[status];
+				const Icon = cfg.icon;
+
+				return (
+					<section key={status} className="space-y-2">
+						<h2
+							className={`flex items-center gap-2 text-sm font-semibold ${cfg.color}`}
+						>
+							<Icon className="size-4" />
+							{cfg.label}
+							<span className="text-xs text-muted-foreground font-normal">
+								({sectionJobs.length})
+							</span>
+						</h2>
+
+						<div className="divide-y rounded-lg border">
+							{sectionJobs.map((job) => (
+								<JobCard
+									key={job.id}
+									job={job}
+									isExpanded={expandedJob === job.id}
+									activeEmailId={activeEmailId}
+									selectedEmail={selectedEmail}
+									fetchingEmail={fetchingEmail}
+									onToggle={() => {
+										onToggleExpand(job.id);
+										requestAnimationFrame(() => {
+											document.getElementById(job.id)?.scrollIntoView({
+												behavior: "smooth",
+												block: "center",
+											});
+										});
+									}}
+									onSelectEmail={onSelectEmail}
+									onStatusUpdate={onStatusUpdate}
+								/>
+							))}
+						</div>
+					</section>
+				);
+			})}
+
+			{(lastSyncTime > 0 || newCount > 0) && (
+				<p className="text-xs text-muted-foreground">
+					{lastSyncTime > 0 && `Last synced ${formatTimeAgo(lastSyncTime)}`}
+					{newCount > 0 && ` · ${newCount} new updates`}
+				</p>
+			)}
+		</>
+	);
+}
+
+function formatTimeAgo(ms: number): string {
+	const delta = Date.now() - ms;
+	const mins = Math.floor(delta / 60000);
+	if (mins < 1) return "just now";
+	if (mins < 60) return `${mins}m ago`;
+	const hours = Math.floor(mins / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
