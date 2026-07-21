@@ -102,6 +102,18 @@ function JobsContent() {
 					<Briefcase className="size-6" /> Job Applications
 				</h1>
 				<div className="flex items-center gap-3">
+					<span className="hidden sm:inline text-xs text-muted-foreground">
+						{state.scannedCount > 0 && (
+							<>
+								{state.scannedCount.toLocaleString()} scanned
+								{state.oldestScanned && (
+									<>
+										{" \u00B7 "}since {state.oldestScanned}
+									</>
+								)}
+							</>
+						)}
+					</span>
 					{state.syncing && (
 						<span className="flex items-center gap-1 text-xs text-muted-foreground">
 							<Loader2 className="size-3 animate-spin" /> Syncing…
@@ -115,10 +127,27 @@ function JobsContent() {
 						<RefreshCw
 							className={`size-4 ${state.syncing ? "animate-spin" : ""}`}
 						/>
-						Load Older Emails
+						Load Older
 					</button>
 				</div>
 			</div>
+
+			{/* Progress bar — shown during sync */}
+			{state.syncing && state.batchTotal > 0 && (
+				<div className="flex items-center gap-3">
+					<div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+						<div
+							className="h-full rounded-full bg-primary transition-all duration-300"
+							style={{
+								width: `${(state.batchProcessed / state.batchTotal) * 100}%`,
+							}}
+						/>
+					</div>
+					<span className="text-xs text-muted-foreground shrink-0">
+						Processing {state.batchProcessed} / {state.batchTotal} emails
+					</span>
+				</div>
+			)}
 
 			{/* Sync error */}
 			{state.syncError && (

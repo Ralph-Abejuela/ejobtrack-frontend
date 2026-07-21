@@ -8,7 +8,7 @@ import {
 	storeJob,
 	addToDuplicateIndex,
 } from "@/lib/jobs-db";
-import { markScanned, isScanned } from "@/lib/jobs-cache";
+import { markScanned, isScanned, getScannedCount } from "@/lib/jobs-cache";
 import { classifyEmail } from "@/lib/classify-email";
 import type { JobApplication } from "@/lib/jobs/types";
 import { stringSimilarity, COMPANY_SIMILARITY_THRESHOLD } from "@/lib/utils";
@@ -20,6 +20,14 @@ interface JobPollerState {
 	lastSyncTime: number;
 	newCount: number;
 	syncError: string | null;
+	/** Total emails ever scanned (from Dexie) */
+	scannedCount: number;
+	/** Oldest scanned email date as ISO string */
+	oldestScanned: string | null;
+	/** Progress: emails processed in current batch */
+	batchProcessed: number;
+	/** Progress: total emails in current batch */
+	batchTotal: number;
 }
 
 /** Epoch ms → YYYY/MM/DD for Gmail search. */
@@ -33,6 +41,7 @@ async function processEmails(
 	accessToken: string,
 	userEmail: string,
 	ids: string[],
+	onProgress?: (processed: number, total: number) => void,
 ): Promise<{ newJobs: number }> {
 	const emails = (
 		await Promise.all(
@@ -48,9 +57,11 @@ async function processEmails(
 
 	let newJobs = 0;
 	const scannedIds: string[] = [];
+	const total = emails.length;
 
-	for (const email of emails) {
-		console.log(email);
+	for (let i = 0; i < total; i++) {
+		const email = emails[i];
+		onProgress?.(i + 1, total);
 		if (await isScanned(email.id)) continue;
 		scannedIds.push(email.id);
 
@@ -172,6 +183,10 @@ export function useJobPoller() {
 		lastSyncTime: 0,
 		newCount: 0,
 		syncError: null,
+		scannedCount: 0,
+		oldestScanned: null,
+		batchProcessed: 0,
+		batchTotal: 0,
 	});
 
 	const pollingRef = useRef(false);
@@ -182,9 +197,29 @@ export function useJobPoller() {
 		setStatusCounts(await getStatusCounts(userEmail));
 	}, [userEmail]);
 
+	const loadScanStats = useCallback(async () => {
+		if (!userEmail) return;
+		const [count, crawled] = await Promise.all([
+			getScannedCount(userEmail),
+			getCrawlState(userEmail),
+		]);
+		setState((s) => ({
+			...s,
+			scannedCount: count,
+			oldestScanned: crawled.oldestTs
+				? new Date(crawled.oldestTs).toLocaleDateString("en-US", {
+						month: "short",
+						day: "numeric",
+						year: "numeric",
+					})
+				: null,
+		}));
+	}, [userEmail]);
+
 	useEffect(() => {
 		loadJobs();
-	}, [loadJobs]);
+		loadScanStats();
+	}, [loadJobs, loadScanStats]);
 
 	/**
 	 * Fetch latest 50 emails (initial popup).
@@ -200,18 +235,31 @@ export function useJobPoller() {
 			const listRes = await listMessages(accessToken, {
 				maxResults: PAGE_SIZE,
 			});
+			const ids = listRes.messages.map((m) => m.id);
 			const { newJobs } = await processEmails(
 				accessToken,
 				userEmail,
-				listRes.messages.map((m) => m.id),
+				ids,
+				(processed, total) =>
+					setState((s) => ({
+						...s,
+						batchProcessed: processed,
+						batchTotal: total,
+					})),
 			);
 
 			// Store boundaries
-			if (listRes.messages.length > 0) {
+			await setCrawlState(userEmail, {
+				newestTs: 0,
+				oldestTs: 0,
+			});
+
+			let oldestTs: number | null = null;
+			if (ids.length > 0) {
 				const full = await Promise.all(
-					listRes.messages.map(async (m) => {
+					ids.map(async (id) => {
 						try {
-							return parseMessage(await getMessage(accessToken, m.id, "full"));
+							return parseMessage(await getMessage(accessToken, id, "full"));
 						} catch {
 							return null;
 						}
@@ -223,23 +271,33 @@ export function useJobPoller() {
 				if (valid.length > 0) {
 					const ts = valid.map((e) => Number(e.internalDate));
 					const newest = Math.max(...ts);
-					const oldest = Math.min(...ts);
+					oldestTs = Math.min(...ts);
 					await setCrawlState(userEmail, {
 						newestTs: newest,
-						oldestTs: oldest,
-						totalJobs: getCrawlState(userEmail).totalJobs,
+						oldestTs: oldestTs,
 					});
 				}
 			}
 
 			await loadJobs();
+			const [scannedCount] = await Promise.all([getScannedCount(userEmail)]);
 			const nowMs = Date.now();
 			localStorage.setItem(`job_sync_ms_${userEmail}`, String(nowMs));
 			setState((s) => ({
 				...s,
 				syncing: false,
+				batchProcessed: 0,
+				batchTotal: 0,
 				lastSyncTime: nowMs,
 				newCount: newJobs,
+				scannedCount,
+				oldestScanned: oldestTs
+					? new Date(oldestTs).toLocaleDateString("en-US", {
+							month: "short",
+							day: "numeric",
+							year: "numeric",
+						})
+					: null,
 			}));
 		} catch (err) {
 			setState((s) => ({
@@ -250,7 +308,7 @@ export function useJobPoller() {
 		} finally {
 			pollingRef.current = false;
 		}
-	}, [accessToken, userEmail, loadJobs]);
+	}, [accessToken, userEmail, loadJobs, loadScanStats]);
 
 	/**
 	 * Hourly poll: check for new emails since newestTs.
@@ -276,17 +334,24 @@ export function useJobPoller() {
 				q: `after:${tsToGmailDate(crawl.newestTs)}`,
 			});
 
+			const ids = listRes.messages.map((m) => m.id);
 			const { newJobs } = await processEmails(
 				accessToken,
 				userEmail,
-				listRes.messages.map((m) => m.id),
+				ids,
+				(processed, total) =>
+					setState((s) => ({
+						...s,
+						batchProcessed: processed,
+						batchTotal: total,
+					})),
 			);
 
-			if (listRes.messages.length > 0) {
+			if (ids.length > 0) {
 				const full = await Promise.all(
-					listRes.messages.map(async (m) => {
+					ids.map(async (id) => {
 						try {
-							return parseMessage(await getMessage(accessToken, m.id, "full"));
+							return parseMessage(await getMessage(accessToken, id, "full"));
 						} catch {
 							return null;
 						}
@@ -305,7 +370,15 @@ export function useJobPoller() {
 
 			localStorage.setItem(`job_forward_ms_${userEmail}`, String(Date.now()));
 			await loadJobs();
-			setState((s) => ({ ...s, syncing: false, newCount: newJobs }));
+			const scannedCount = await getScannedCount(userEmail);
+			setState((s) => ({
+				...s,
+				syncing: false,
+				batchProcessed: 0,
+				batchTotal: 0,
+				newCount: newJobs,
+				scannedCount,
+			}));
 		} catch (err) {
 			setState((s) => ({
 				...s,
@@ -316,7 +389,7 @@ export function useJobPoller() {
 		} finally {
 			pollingRef.current = false;
 		}
-	}, [accessToken, userEmail, loadJobs]);
+	}, [accessToken, userEmail, loadJobs, loadScanStats]);
 
 	/**
 	 * Load more: scan the next 50 emails older than the oldest cached.
@@ -336,17 +409,24 @@ export function useJobPoller() {
 				q: `before:${tsToGmailDate(crawl.oldestTs)}`,
 			});
 
+			const ids = listRes.messages.map((m) => m.id);
 			const { newJobs } = await processEmails(
 				accessToken,
 				userEmail,
-				listRes.messages.map((m) => m.id),
+				ids,
+				(processed, total) =>
+					setState((s) => ({
+						...s,
+						batchProcessed: processed,
+						batchTotal: total,
+					})),
 			);
 
-			if (listRes.messages.length > 0) {
+			if (ids.length > 0) {
 				const full = await Promise.all(
-					listRes.messages.map(async (m) => {
+					ids.map(async (id) => {
 						try {
-							return parseMessage(await getMessage(accessToken, m.id, "full"));
+							return parseMessage(await getMessage(accessToken, id, "full"));
 						} catch {
 							return null;
 						}
@@ -355,22 +435,39 @@ export function useJobPoller() {
 				const valid = full.filter(
 					(e): e is NonNullable<typeof e> => e !== null,
 				);
+
 				if (valid.length > 0) {
-					const oldest = Math.min(...valid.map((e) => Number(e.internalDate)));
+					const oldestBatch = Math.min(
+						...valid.map((e) => Number(e.internalDate)),
+					);
 					await setCrawlState(userEmail, {
-						oldestTs: Math.min(crawl.oldestTs, oldest),
+						oldestTs: Math.min(crawl.oldestTs, oldestBatch),
 					});
 				}
 			}
 
 			await loadJobs();
+			const [scannedCount, updatedCrawl] = await Promise.all([
+				getScannedCount(userEmail),
+				getCrawlState(userEmail),
+			]);
 			const nowMs = Date.now();
 			localStorage.setItem(`job_sync_ms_${userEmail}`, String(nowMs));
 			setState((s) => ({
 				...s,
 				syncing: false,
+				batchProcessed: 0,
+				batchTotal: 0,
 				lastSyncTime: nowMs,
 				newCount: newJobs,
+				scannedCount,
+				oldestScanned: updatedCrawl.oldestTs
+					? new Date(updatedCrawl.oldestTs).toLocaleDateString("en-US", {
+							month: "short",
+							day: "numeric",
+							year: "numeric",
+						})
+					: null,
 			}));
 		} catch (err) {
 			setState((s) => ({
@@ -381,7 +478,7 @@ export function useJobPoller() {
 		} finally {
 			pollingRef.current = false;
 		}
-	}, [accessToken, userEmail, loadJobs]);
+	}, [accessToken, userEmail, loadJobs, loadScanStats]);
 
 	// --- Initial sync on mount if never synced ---
 	useEffect(() => {
@@ -417,6 +514,7 @@ interface CrawlState {
 	newestTs: number | null;
 	oldestTs: number | null;
 	totalJobs: number;
+	totalEstimate: number;
 }
 
 function getCrawlState(userEmail: string): CrawlState {
@@ -426,12 +524,20 @@ function getCrawlState(userEmail: string): CrawlState {
 	} catch {
 		/* ignore */
 	}
-	return { userEmail, newestTs: null, oldestTs: null, totalJobs: 0 };
+	return {
+		userEmail,
+		newestTs: null,
+		oldestTs: null,
+		totalJobs: 0,
+		totalEstimate: 0,
+	};
 }
 
 function setCrawlState(
 	userEmail: string,
-	partial: Partial<{ newestTs: number; oldestTs: number; totalJobs: number }>,
+	partial: Partial<
+		Pick<CrawlState, "newestTs" | "oldestTs" | "totalJobs" | "totalEstimate">
+	>,
 ): void {
 	const existing = getCrawlState(userEmail);
 	const merged = { ...existing, ...partial, userEmail };

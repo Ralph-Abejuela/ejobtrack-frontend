@@ -46,8 +46,6 @@ export const linkedinParser: JobPlatformParser = {
 	parse(email) {
 		const { subject, snippet, body, bodyClean } = email;
 
-		console.log(subject);
-
 		let jobTitle = "";
 		let company = "";
 		let status = JobStatus.APPLIED;
