@@ -106,15 +106,6 @@ pnpm build
 5. Add your production domain to authorized JavaScript origins
 6. Copy the Client ID to `VITE_GOOGLE_CLIENT_ID`
 
-### Google Cloud Setup
-
-1. Create a project at [Google Cloud Console](https://console.cloud.google.com)
-2. Enable the **Gmail API**
-3. Under **Credentials**, create an OAuth 2.0 Client ID (Web application)
-4. Add `http://localhost:5173` to authorized JavaScript origins
-5. Add your production domain to authorized JavaScript origins
-6. Copy the Client ID to `VITE_GOOGLE_CLIENT_ID`
-
 ## Deployment
 
 ejobtrack is deployed on [Cloudflare Pages](https://ejobtrack.ralphabejuela.com).
