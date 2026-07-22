@@ -152,24 +152,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		// If already signed in from session, skip GSI init
 		if (state.user) return;
 
-		// Wait for GSI lib to load
-		let attempts = 0;
-		const interval = setInterval(() => {
-			if (typeof google !== "undefined" && google.accounts?.id) {
-				clearInterval(interval);
-				google.accounts.id.initialize({
-					client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-					use_fedcm_for_button: true,
-					callback: handleCredentialResponse,
-				});
-				setState((prev) => ({ ...prev, gsiReady: true }));
-				// One Tap prompt for returning FedCM users
-				google.accounts.id.prompt();
-			}
-			if (++attempts > 20) clearInterval(interval); // 2s timeout
-		}, 100);
+		function initGSI() {
+			if (typeof google === "undefined" || !google.accounts?.id) return;
+			google.accounts.id.initialize({
+				client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+				use_fedcm_for_button: true,
+				callback: handleCredentialResponse,
+			});
+			setState((prev) => ({ ...prev, gsiReady: true }));
+			google.accounts.id.prompt();
+		}
 
-		return () => clearInterval(interval);
+		// Already loaded?
+		if (typeof google !== "undefined" && google.accounts?.id) {
+			initGSI();
+			return;
+		}
+
+		// Wait for the async script to load
+		const script = document.querySelector(
+			'script[src="https://accounts.google.com/gsi/client"]',
+		);
+		if (script) {
+			script.addEventListener("load", initGSI, { once: true });
+			// Fallback: if script already loaded but boostrapped, re-check
+			const fallback = setTimeout(initGSI, 2000);
+			return () => {
+				script.removeEventListener("load", initGSI);
+				clearTimeout(fallback);
+			};
+		}
 	}, [handleCredentialResponse, state.user]);
 
 	// --- Sign out ---
