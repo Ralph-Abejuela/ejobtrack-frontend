@@ -4,6 +4,11 @@ let _classify: ClassifyFn | null = null;
 let _loading = false;
 let _erred: string | null = null;
 
+/** Get model load error message, if any. Null means model loaded or still loading. */
+export function getModelError(): string | null {
+	return _erred;
+}
+
 /** Labels that indicate a job-related email. */
 const JOB_LABELS = new Set(["confirmation", "rejection", "interview", "offer"]);
 
