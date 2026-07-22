@@ -30,7 +30,6 @@ import { storeEmails, db as emailDb } from "@/lib/email-cache";
 import { getMessage, parseMessage } from "@/lib/gmail";
 import { JobStatus, type JobApplication } from "@/lib/jobs/types";
 import { toast } from "sonner";
-import { getModelError } from "@/lib/classify-email";
 import { STATUS_ORDER } from "./config";
 
 interface SelectedEmail {
@@ -107,17 +106,6 @@ export function JobProvider({ children }: { children: ReactNode }) {
 	const { user, accessToken } = useAuth();
 	const { jobs, statusCounts, loaded, state, loadMore, reload } =
 		useJobPoller();
-
-	// ── Show toast once if ML model fails to load ──
-	useEffect(() => {
-		const err = getModelError();
-		if (err) {
-			toast.warning("AI email classifier unavailable", {
-				description: "Falling back to keyword matching. " + err.slice(0, 200),
-				duration: 10000,
-			});
-		}
-	}, []);
 
 	// ── Expanded job ──
 	const [expandedJob, setExpandedJob] = useState<string | null>(null);
