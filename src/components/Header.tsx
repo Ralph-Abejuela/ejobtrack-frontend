@@ -13,6 +13,12 @@ export default function Header() {
 				<Link to="/" className="text-lg font-bold tracking-tight">
 					ejobtrack
 				</Link>
+				<Link
+					to="/privacy"
+					className="text-xs text-muted-foreground hover:text-foreground"
+				>
+					Privacy
+				</Link>
 			</div>
 
 			<div className="flex items-center gap-3">
@@ -22,11 +28,7 @@ export default function Header() {
 							<User className="size-4" />
 							<span className="hidden sm:inline">{user.email}</span>
 						</div>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={signOut}
-						>
+						<Button variant="outline" size="sm" onClick={signOut}>
 							<LogOut data-icon="inline-start" />
 							<span className="hidden sm:inline">Sign out</span>
 						</Button>
