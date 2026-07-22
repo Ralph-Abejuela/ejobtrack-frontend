@@ -13,6 +13,7 @@ import { classifyEmail } from "@/lib/classify-email";
 import type { JobApplication } from "@/lib/jobs/types";
 import { stringSimilarity, COMPANY_SIMILARITY_THRESHOLD } from "@/lib/utils";
 import { capture } from "./analytics";
+import { storeEmails } from "@/lib/email-cache";
 
 const PAGE_SIZE = 25;
 
@@ -55,6 +56,9 @@ async function processEmails(
 			}),
 		)
 	).filter((e): e is NonNullable<typeof e> => e !== null);
+
+	// Cache fetched emails so timeline viewer doesn't re-fetch
+	await storeEmails(userEmail, emails);
 
 	await capture("emails_fetched", {
 		count: emails.length,
@@ -335,7 +339,7 @@ export function useJobPoller() {
 		const lastCheck = Number(
 			localStorage.getItem(`job_forward_ms_${userEmail}`) ?? "0",
 		);
-		if (Date.now() - lastCheck < 60 * 60 * 1000) return;
+		if (Date.now() - lastCheck < 15 * 60 * 1000) return;
 
 		pollingRef.current = true;
 		setState((s) => ({ ...s, syncing: true, syncError: null }));
@@ -503,8 +507,18 @@ export function useJobPoller() {
 
 	useEffect(() => {
 		if (!accessToken || !userEmail) return;
-		const id = setInterval(() => checkNewEmails(), 60 * 60 * 1000);
+		const id = setInterval(() => checkNewEmails(), 15 * 60 * 1000);
 		return () => clearInterval(id);
+	}, [accessToken, userEmail, checkNewEmails]);
+
+	// Check for new emails when tab regains focus
+	useEffect(() => {
+		if (!accessToken || !userEmail) return;
+		const onFocus = () => {
+			if (document.visibilityState === "visible") checkNewEmails();
+		};
+		document.addEventListener("visibilitychange", onFocus);
+		return () => document.removeEventListener("visibilitychange", onFocus);
 	}, [accessToken, userEmail, checkNewEmails]);
 
 	return {

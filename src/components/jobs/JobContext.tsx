@@ -266,22 +266,22 @@ export function JobProvider({ children }: { children: ReactNode }) {
 		let cancelled = false;
 		setFetchingEmail(true);
 
-		// Try Dexie cache first
 		(async () => {
-			if (cancelled) return;
-			const cached = await emailDb.emails.get(activeEmailId);
-			if (cancelled) return;
-			if (cached) {
-				setSelectedEmail({
-					subject: cached.subject,
-					from: cached.from,
-					body: cached.body || cached.snippet || "(no body)",
-				});
-				setFetchingEmail(false);
-				return; // cache hit
+			// 1. Try cache first
+			if (!cancelled) {
+				const cached = await emailDb.emails.get(activeEmailId);
+				if (!cancelled && cached) {
+					setSelectedEmail({
+						subject: cached.subject,
+						from: cached.from,
+						body: cached.body || cached.snippet || "(no body)",
+					});
+					setFetchingEmail(false);
+					return;
+				}
 			}
 
-			// Cache miss — fetch from Gmail API
+			// 2. Cache miss — fetch from Gmail API
 			try {
 				const msg = await getMessage(accessToken, activeEmailId);
 				if (cancelled) return;
@@ -291,7 +291,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
 					from: parsed.from,
 					body: parsed.body || parsed.snippet || "(no body)",
 				};
-				// Persist to Dexie cache for future loads
+				// 3. Cache for future loads
 				storeEmails(user!.email, [parsed]);
 				if (cancelled) return;
 				setSelectedEmail(data);
