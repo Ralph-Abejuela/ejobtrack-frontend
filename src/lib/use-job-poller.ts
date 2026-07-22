@@ -56,7 +56,7 @@ async function processEmails(
 		)
 	).filter((e): e is NonNullable<typeof e> => e !== null);
 
-	capture("emails_fetched", {
+	await capture("emails_fetched", {
 		count: emails.length,
 		user: userEmail,
 	});
@@ -176,7 +176,7 @@ async function processEmails(
 		await markScanned(userEmail, scannedIds);
 	}
 
-	capture("batch_processed", {
+	await capture("batch_processed", {
 		emails_processed: scannedIds.length,
 		new_jobs: newJobs,
 	});

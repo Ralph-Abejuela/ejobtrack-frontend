@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				loading: false,
 			}));
 			persist(response.credential, null);
-			identifyUser(user.email, user.name);
+			identifyUser(user.email);
 			capture("user_signed_in", { email: user.email });
 
 			// Create token client for Gmail scope (lazy – user must click "read email" to trigger)
