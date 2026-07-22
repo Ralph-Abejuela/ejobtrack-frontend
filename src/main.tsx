@@ -23,7 +23,7 @@ if (POSTHOG_KEY) {
 // Create a new router instance
 const basepath =
 	import.meta.env.PROD && window.location.hostname.includes("github.io")
-		? "/ejobtrack-frontend/"
+		? "/ejobtrack/"
 		: "/";
 const router = createRouter({ routeTree, basepath });
 

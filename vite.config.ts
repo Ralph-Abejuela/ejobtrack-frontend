@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-	base: process.env.GITHUB_ACTIONS ? "/ejobtrack-frontend/" : "/",
+	base: process.env.GITHUB_ACTIONS ? "/ejobtrack/" : "/",
 	plugins: [tanstackRouter(), react(), tailwindcss()],
 	resolve: {
 		alias: {
