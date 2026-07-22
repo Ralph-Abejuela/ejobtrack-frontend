@@ -2,14 +2,14 @@ import {
 	AlertTriangle,
 	ChevronDown,
 	ChevronUp,
-	Square,
-	CheckSquare,
 	Merge,
 	Loader2,
 } from "lucide-react";
-import { formatTimeAgo } from "@/lib/utils";
 import type { DuplicateGroup, ResolutionEntry } from "@/lib/jobs-db";
 import { STCFG } from "./config";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatTimeAgo } from "@/lib/utils";
 
 interface DuplicatesPanelProps {
 	visibleDuplicates: DuplicateGroup[];
@@ -50,7 +50,8 @@ export default function DuplicatesPanel({
 
 	return (
 		<div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
-			<button
+			<Button
+				variant="ghost"
 				onClick={onToggleDuplicates}
 				className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-200"
 			>
@@ -62,7 +63,7 @@ export default function DuplicatesPanel({
 				) : (
 					<ChevronDown className="ml-auto size-4" />
 				)}
-			</button>
+			</Button>
 
 			{showDuplicates && (
 				<div className="space-y-3 border-t border-amber-200 px-4 py-3 dark:border-amber-800">
@@ -84,12 +85,13 @@ export default function DuplicatesPanel({
 									<p className="truncate text-xs font-medium text-amber-900 dark:text-amber-100">
 										{group.jobs[0].jobTitle}
 									</p>
-									<button
+									<Button
+										variant="ghost"
+										size="xs"
 										onClick={() => onDismiss(group.groupKey)}
-										className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-800"
 									>
 										Ignore
-									</button>
+									</Button>
 								</div>
 
 								<div className="mt-2 space-y-1">
@@ -100,19 +102,15 @@ export default function DuplicatesPanel({
 												key={j.id}
 												className="flex items-center gap-2 rounded px-2 py-1 text-xs"
 											>
-												<button
-													onClick={() => onToggleSelect(j.id)}
-													className="shrink-0"
-												>
-													{checked ? (
-														<CheckSquare className="size-4 text-amber-600" />
-													) : (
-														<Square className="size-4 text-amber-400" />
-													)}
-												</button>
-												<button
+												<Checkbox
+													checked={checked}
+													onCheckedChange={() => onToggleSelect(j.id)}
+												/>
+												<Button
+													variant="ghost"
+													size="xs"
 													onClick={() => onScrollToJob(j.id)}
-													className="min-w-0 flex-1 truncate text-left hover:underline"
+													className="min-w-0 flex-1 truncate text-left"
 												>
 													{j.company}
 													{checked && (
@@ -120,7 +118,7 @@ export default function DuplicatesPanel({
 															selected
 														</span>
 													)}
-												</button>
+												</Button>
 												<span className="shrink-0 text-muted-foreground">
 													{STCFG[j.status]?.label ?? j.status}
 												</span>
@@ -130,27 +128,32 @@ export default function DuplicatesPanel({
 								</div>
 
 								<div className="mt-2 flex items-center gap-2">
-									<button
+									<Button
+										variant="outline"
+										size="xs"
 										onClick={() => onMergeSelected(group.groupKey)}
 										disabled={
 											merging === `selected:${group.groupKey}` || selCount < 2
 										}
-										className="inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-medium hover:bg-amber-100 disabled:opacity-50 dark:border-amber-600 dark:hover:bg-amber-800"
 									>
 										{merging === `selected:${group.groupKey}` ? (
-											<Loader2 className="size-3 animate-spin" />
+											<Loader2
+												data-icon="inline-start"
+												className="animate-spin"
+											/>
 										) : (
-											<Merge className="size-3" />
+											<Merge data-icon="inline-start" />
 										)}
 										Merge selected{selCount >= 2 ? ` (${selCount})` : ""}
-									</button>
-									<button
+									</Button>
+									<Button
+										variant="outline"
+										size="xs"
 										onClick={() => onMergeNew(group.groupKey)}
 										disabled={selCount < 2}
-										className="inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-medium hover:bg-amber-100 disabled:opacity-50 dark:border-amber-600 dark:hover:bg-amber-800"
 									>
 										Merge into new…
-									</button>
+									</Button>
 								</div>
 							</div>
 						);
@@ -184,7 +187,8 @@ function ResolutionHistory({
 }) {
 	return (
 		<>
-			<button
+			<Button
+				variant="ghost"
 				onClick={onToggleHistory}
 				className="flex w-full items-center gap-1.5 pt-2 text-[11px] font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
 			>
@@ -194,7 +198,7 @@ function ResolutionHistory({
 					<ChevronDown className="size-3" />
 				)}
 				History ({resolutionHistory.length})
-			</button>
+			</Button>
 			{showHistory && (
 				<div className="mt-2 space-y-1">
 					{resolutionHistory.length === 0 && (
@@ -223,17 +227,18 @@ function ResolutionHistory({
 								{formatTimeAgo(r.timestamp)}
 							</span>
 							{r.action === "merge" && (
-								<button
+								<Button
+									variant="ghost"
+									size="xs"
 									onClick={() => onUndoMerge(r.timestamp)}
 									disabled={undoing}
-									className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-amber-600 hover:bg-amber-100 disabled:opacity-50 dark:text-amber-400 dark:hover:bg-amber-800"
 								>
 									{undoing ? (
 										<Loader2 className="size-3 animate-spin" />
 									) : (
 										"Undo merge"
 									)}
-								</button>
+								</Button>
 							)}
 							{(r.action === "ignore" || r.action === "merge-undo") && (
 								<span className="text-[10px] text-amber-400">undone</span>

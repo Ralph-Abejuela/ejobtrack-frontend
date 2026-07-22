@@ -12,7 +12,7 @@ function RootLayout() {
 				<Outlet />
 			</main>
 			<GmailAuthModal />
-			<Toaster richColors closeButton />
+			<Toaster closeButton />
 		</AuthProvider>
 	);
 }

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { LogOut, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Header() {
 	const { user, signOut } = useAuth();
@@ -29,13 +30,14 @@ export default function Header() {
 							<User className="size-4" />
 							<span className="hidden sm:inline">{user.email}</span>
 						</div>
-						<button
+						<Button
+							variant="outline"
+							size="sm"
 							onClick={signOut}
-							className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
 						>
-							<LogOut className="size-4" />
+							<LogOut data-icon="inline-start" />
 							<span className="hidden sm:inline">Sign out</span>
-						</button>
+						</Button>
 					</>
 				) : (
 					<GoogleSignInButton />

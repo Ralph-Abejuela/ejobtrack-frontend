@@ -2,6 +2,12 @@ import type { JobApplication } from "@/lib/jobs/types";
 import { JobStatus } from "@/lib/jobs/types";
 import { STCFG, STATUS_ORDER } from "./config";
 import JobCard from "./JobCard";
+import {
+	Empty,
+	EmptyHeader,
+	EmptyTitle,
+	EmptyDescription,
+} from "@/components/ui/empty";
 
 interface JobListProps {
 	jobs: JobApplication[];
@@ -40,10 +46,14 @@ export default function JobList({
 }: JobListProps) {
 	if (jobs.length === 0 && !syncing) {
 		return (
-			<div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-				No job applications tracked yet. Click Load Older Emails to fetch from
-				your inbox.
-			</div>
+			<Empty>
+				<EmptyHeader>
+					<EmptyTitle>No job applications yet</EmptyTitle>
+					<EmptyDescription>
+						Click Load Older Emails to fetch from your inbox.
+					</EmptyDescription>
+				</EmptyHeader>
+			</Empty>
 		);
 	}
 

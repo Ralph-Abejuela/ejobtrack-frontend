@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { X, Merge, Loader2 } from "lucide-react";
+import { Merge, Loader2 } from "lucide-react";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+	DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { DuplicateGroup } from "@/lib/jobs-db";
 import type { JobApplication } from "@/lib/jobs/types";
 
@@ -34,64 +44,55 @@ export default function MergeNewModal({
 	const isMerging = merging === `new:${groupKey}`;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-			<div className="mx-4 w-full max-w-md rounded-lg border bg-white p-5 shadow-xl dark:bg-gray-900">
-				<div className="flex items-center justify-between">
-					<h3 className="text-sm font-semibold">Merge into New Entry</h3>
-					<button
-						onClick={onClose}
-						className="text-muted-foreground hover:text-foreground"
-					>
-						<X className="size-4" />
-					</button>
-				</div>
+		<Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+			<DialogContent showCloseButton={false} className="max-w-md sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>Merge into New Entry</DialogTitle>
+					<DialogDescription>
+						{selItems.length} record{selItems.length !== 1 ? "s" : ""} selected.
+						All history will be consolidated.
+					</DialogDescription>
+				</DialogHeader>
 
-				<p className="mt-1 text-xs text-muted-foreground">
-					{selItems.length} record{selItems.length !== 1 ? "s" : ""} selected.
-					All history will be consolidated.
-				</p>
-
-				<div className="mt-4 space-y-3">
-					<label className="block text-xs font-medium">
+				<div className="flex flex-col gap-3">
+					<label className="flex flex-col gap-1 text-xs font-medium">
 						Company
-						<input
+						<Input
 							value={company}
 							onChange={(e) => setCompany(e.target.value)}
-							className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
 						/>
 					</label>
-					<label className="block text-xs font-medium">
+					<label className="flex flex-col gap-1 text-xs font-medium">
 						Job Title
-						<input
+						<Input
 							value={jobTitle}
 							onChange={(e) => setJobTitle(e.target.value)}
-							className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
 						/>
 					</label>
 				</div>
 
-				<div className="mt-5 flex items-center justify-end gap-2">
-					<button
+				<DialogFooter>
+					<Button
+						variant="outline"
 						onClick={onClose}
 						disabled={isMerging}
-						className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
 					>
 						Cancel
-					</button>
-					<button
+					</Button>
+					<Button
+						variant="default"
 						onClick={() => onMerge(groupKey, company.trim(), jobTitle.trim())}
 						disabled={isMerging || !company.trim() || !jobTitle.trim()}
-						className="inline-flex items-center gap-1 rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
 					>
 						{isMerging ? (
-							<Loader2 className="size-3 animate-spin" />
+							<Loader2 data-icon="inline-start" className="animate-spin" />
 						) : (
-							<Merge className="size-3" />
+							<Merge data-icon="inline-start" />
 						)}
 						Merge
-					</button>
-				</div>
-			</div>
-		</div>
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }

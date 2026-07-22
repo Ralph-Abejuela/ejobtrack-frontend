@@ -8,11 +8,13 @@ import {
 	MailOpen,
 	ChevronDown,
 	ChevronUp,
-	Loader2,
 	AlertCircle,
 	RefreshCw,
 	Trash2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function GmailReader() {
 	const { user, accessToken, requestingScope, requestGmailScope } = useAuth();
@@ -81,21 +83,22 @@ export default function GmailReader() {
 
 	if (!accessToken) {
 		return (
-			<div className="mt-8 space-y-4">
-				<h2 className="text-lg font-semibold flex items-center gap-2">
+			<div className="mt-8 flex flex-col gap-4">
+				<h2 className="flex items-center gap-2 text-lg font-semibold">
 					<Mail className="size-5" /> Gmail Inbox
 				</h2>
-				<p className="text-muted-foreground text-sm">
+				<p className="text-sm text-muted-foreground">
 					Grant read-only access to your Gmail to view and process emails.
 				</p>
-				<button
+				<Button
+					variant="default"
 					onClick={handleGrantAccess}
 					disabled={requestingScope}
-					className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+					className="w-fit"
 				>
-					{requestingScope && <Loader2 className="size-4 animate-spin" />}
+					{requestingScope && <Spinner data-icon="inline-start" />}
 					Connect Gmail
-				</button>
+				</Button>
 			</div>
 		);
 	}
@@ -106,16 +109,17 @@ export default function GmailReader() {
 		: null;
 
 	return (
-		<div className="mt-8 space-y-4">
+		<div className="mt-8 flex flex-col gap-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-lg font-semibold flex items-center gap-2">
+				<h2 className="flex items-center gap-2 text-lg font-semibold">
 					<Mail className="size-5" /> Gmail Inbox
 				</h2>
 
 				<div className="flex items-center gap-3">
 					{poll.syncing && (
 						<span className="flex items-center gap-1 text-xs text-muted-foreground">
-							<Loader2 className="size-3 animate-spin" /> Syncing…
+							<Spinner />
+							Syncing…
 						</span>
 					)}
 					{lastSyncStr && !poll.syncing && (
@@ -124,56 +128,63 @@ export default function GmailReader() {
 						</span>
 					)}
 
-					<button
+					<Button
+						variant="outline"
+						size="sm"
 						onClick={() => refresh()}
 						disabled={poll.syncing}
-						className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
 						title="Sync now"
 					>
 						<RefreshCw
-							className={`size-3 ${poll.syncing ? "animate-spin" : ""}`}
+							data-icon="inline-start"
+							className={poll.syncing ? "animate-spin" : ""}
 						/>
 						Sync
-					</button>
+					</Button>
 
 					{hasCachedData && (
-						<button
+						<Button
+							variant="outline"
+							size="sm"
 							onClick={handleClearCache}
-							className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
 							title="Clear cached emails"
 						>
-							<Trash2 className="size-3" />
+							<Trash2 data-icon="inline-start" />
 							Clear cache
-						</button>
+						</Button>
 					)}
 				</div>
 			</div>
 
 			{poll.syncError && (
-				<div className="flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-					<AlertCircle className="mt-0.5 size-4 shrink-0" />
-					<span>{poll.syncError}</span>
-				</div>
+				<Alert variant="destructive">
+					<AlertCircle />
+					<AlertTitle>Sync Error</AlertTitle>
+					<AlertDescription>{poll.syncError}</AlertDescription>
+				</Alert>
 			)}
 
 			{poll.newCount > 0 && (
-				<div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
-					{poll.newCount} new email{poll.newCount !== 1 ? "s" : ""} synced
-				</div>
+				<Alert>
+					<AlertTitle>
+						{poll.newCount} new email{poll.newCount !== 1 ? "s" : ""} synced
+					</AlertTitle>
+				</Alert>
 			)}
 
 			{!hasCachedData && !poll.syncing && (
-				<div className="space-y-3">
+				<div className="flex flex-col gap-3">
 					<p className="text-sm text-muted-foreground">
 						No emails cached yet. Sync to load your inbox.
 					</p>
-					<button
+					<Button
+						variant="default"
 						onClick={() => refresh()}
-						className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+						className="w-fit"
 					>
-						<RefreshCw className="size-4" />
+						<RefreshCw data-icon="inline-start" />
 						Sync Inbox
-					</button>
+					</Button>
 				</div>
 			)}
 
@@ -248,7 +259,7 @@ export default function GmailReader() {
 										</div>
 										{isBodyLoading ? (
 											<div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
-												<Loader2 className="size-4 animate-spin" />
+												<Spinner />
 												Loading body…
 											</div>
 										) : (
@@ -266,12 +277,12 @@ export default function GmailReader() {
 
 			{!allLoaded && (
 				<div className="flex justify-center">
-					<button
+					<Button
+						variant="outline"
 						onClick={loadMore}
 						disabled={loadingMore}
-						className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
 					>
-						{loadingMore && <Loader2 className="size-4 animate-spin" />}
+						{loadingMore && <Spinner data-icon="inline-start" />}
 						{loadingMore
 							? "Loading…"
 							: (() => {
@@ -280,7 +291,7 @@ export default function GmailReader() {
 										? `Load More (${remaining} remaining)`
 										: "Load More";
 								})()}
-					</button>
+					</Button>
 				</div>
 			)}
 		</div>

@@ -1,16 +1,30 @@
 import {
-	ChevronDown,
-	ChevronUp,
 	ExternalLink,
-	Loader2,
 	Pencil,
 	Trash2,
+	Loader2,
+	ChevronDown,
+	ChevronUp,
 } from "lucide-react";
 import { useState } from "react";
 import { JobStatus, type JobApplication } from "@/lib/jobs/types";
 import { formatDate } from "@/lib/utils";
 import Timeline from "./Timeline";
 import { STCFG } from "./config";
+import {
+	Collapsible,
+	CollapsibleTrigger,
+	CollapsibleContent,
+} from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectTrigger,
+	SelectValue,
+	SelectContent,
+	SelectItem,
+} from "@/components/ui/select";
 
 interface JobCardProps {
 	job: JobApplication;
@@ -55,18 +69,21 @@ export default function JobCard({
 	};
 
 	return (
-		<div id={job.id}>
-			<button
-				onClick={onToggle}
-				className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30"
-			>
+		<Collapsible
+			id={job.id}
+			open={isExpanded}
+			onOpenChange={(open) => {
+				if (open !== isExpanded) onToggle();
+			}}
+		>
+			<CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30">
 				<div className="min-w-0 flex-1">
 					{editingTitle ? (
 						<div
 							className="flex items-center gap-1"
 							onClick={(e) => e.stopPropagation()}
 						>
-							<input
+							<Input
 								value={titleDraft}
 								onChange={(e) => setTitleDraft(e.target.value)}
 								onKeyDown={(e) => {
@@ -74,7 +91,7 @@ export default function JobCard({
 									if (e.key === "Escape") setEditingTitle(false);
 								}}
 								autoFocus
-								className="flex-1 rounded border px-2 py-0.5 text-sm font-medium"
+								className="flex-1"
 							/>
 						</div>
 					) : (
@@ -92,9 +109,9 @@ export default function JobCard({
 				) : (
 					<ChevronDown className="size-4 shrink-0 text-muted-foreground" />
 				)}
-			</button>
+			</CollapsibleTrigger>
 
-			{isExpanded && (
+			<CollapsibleContent>
 				<div className="border-t px-4 pb-4 pt-3">
 					<Timeline
 						history={job.history}
@@ -164,39 +181,45 @@ export default function JobCard({
 
 						<div className="flex items-center gap-2">
 							<label className="text-xs text-muted-foreground">Status:</label>
-							<select
+							<Select
 								value={job.status}
-								onChange={(e) =>
-									onStatusUpdate(job.id, e.target.value as JobStatus)
+								onValueChange={(val) =>
+									onStatusUpdate(job.id, val as JobStatus)
 								}
-								className="rounded border px-2 py-1 text-xs"
 							>
-								{Object.values(JobStatus).map((s) => (
-									<option key={s} value={s}>
-										{STCFG[s]?.label ?? s}
-									</option>
-								))}
-							</select>
+								<SelectTrigger className="w-36">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{Object.values(JobStatus).map((s) => (
+										<SelectItem key={s} value={s}>
+											{STCFG[s]?.label ?? s}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
 
 						<div className="flex items-center gap-2 pt-1">
-							<button
+							<Button
+								variant="ghost"
+								size="sm"
 								onClick={() => {
 									setEditingTitle(true);
 									setTitleDraft(job.jobTitle);
 								}}
-								className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
 							>
-								<Pencil className="size-3" />
+								<Pencil data-icon="inline-start" />
 								Edit Title
-							</button>
-							<button
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
 								onClick={() => onDelete(job.id)}
-								className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
 							>
-								<Trash2 className="size-3" />
+								<Trash2 data-icon="inline-start" />
 								Hide Job
-							</button>
+							</Button>
 						</div>
 					</div>
 
@@ -208,7 +231,7 @@ export default function JobCard({
 						</pre>
 					)}
 				</div>
-			)}
-		</div>
+			</CollapsibleContent>
+		</Collapsible>
 	);
 }

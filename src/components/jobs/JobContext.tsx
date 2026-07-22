@@ -392,6 +392,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
 	const handleDeleteHistoryEntry = useCallback(
 		async (jobId: string, index: number) => {
 			await deleteHistoryEntry(jobId, index);
+			toast("Status removed from timeline");
 			await reload();
 		},
 		[reload],

@@ -4,6 +4,9 @@ import { useJobContext, JobProvider } from "@/components/jobs/JobContext";
 import { undoMerge, getResolutionHistory } from "@/lib/jobs-db";
 import { useState, useCallback } from "react";
 import { Loader2, RefreshCw, Briefcase } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Progress, ProgressLabel } from "@/components/ui/progress";
 import StatusSummary from "@/components/jobs/StatusSummary";
 import DuplicatesPanel from "@/components/jobs/DuplicatesPanel";
 import JobList from "@/components/jobs/JobList";
@@ -98,10 +101,10 @@ function JobsContent() {
 	);
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			{/* Header */}
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+				<h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
 					<Briefcase className="size-6" /> Job Applications
 				</h1>
 				<div className="flex items-center gap-3">
@@ -122,41 +125,35 @@ function JobsContent() {
 							<Loader2 className="size-3 animate-spin" /> Syncing…
 						</span>
 					)}
-					<button
+					<Button
+						variant="outline"
 						onClick={() => loadMore()}
 						disabled={state.syncing}
-						className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
 					>
 						<RefreshCw
-							className={`size-4 ${state.syncing ? "animate-spin" : ""}`}
+							data-icon="inline-start"
+							className={state.syncing ? "animate-spin" : ""}
 						/>
 						Load Older
-					</button>
+					</Button>
 				</div>
 			</div>
 
 			{/* Progress bar — shown during sync */}
 			{state.syncing && state.batchTotal > 0 && (
-				<div className="flex items-center gap-3">
-					<div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-						<div
-							className="h-full rounded-full bg-primary transition-all duration-300"
-							style={{
-								width: `${(state.batchProcessed / state.batchTotal) * 100}%`,
-							}}
-						/>
-					</div>
-					<span className="text-xs text-muted-foreground shrink-0">
+				<Progress value={(state.batchProcessed / state.batchTotal) * 100}>
+					<ProgressLabel>
 						Processing {state.batchProcessed} / {state.batchTotal} emails
-					</span>
-				</div>
+					</ProgressLabel>
+				</Progress>
 			)}
 
 			{/* Sync error */}
 			{state.syncError && (
-				<div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-					{state.syncError}
-				</div>
+				<Alert variant="destructive">
+					<AlertTitle>Sync Error</AlertTitle>
+					<AlertDescription>{state.syncError}</AlertDescription>
+				</Alert>
 			)}
 
 			{/* Duplicates */}
