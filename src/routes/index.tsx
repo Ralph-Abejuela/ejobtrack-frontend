@@ -6,7 +6,6 @@ import {
 	CardTitle,
 	CardDescription,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Inbox, ListChecks, GitMerge, Brain, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -42,7 +41,7 @@ function HeroPage() {
 	const navigate = useNavigate();
 
 	return (
-		<div className="flex flex-1 flex-col w-full">
+		<div className="grid-pattern flex flex-1 flex-col w-full overflow-hidden">
 			<div className="relative mx-auto max-w-2xl px-4 py-16 text-center">
 				<div className="flex flex-col items-center gap-8">
 					{/* Hero text */}
@@ -67,7 +66,11 @@ function HeroPage() {
 						<ArrowRight data-icon="inline-end" />
 					</Button>
 
-					<Separator className="max-w-xs" />
+					<div className="flex items-center justify-center gap-3">
+						<div className="size-2.5 rounded-full bg-primary/50" />
+						<div className="size-2.5 rounded-full bg-primary/50" />
+						<div className="size-2.5 rounded-full bg-primary/50" />
+					</div>
 
 					{/* Feature cards */}
 					<div className="grid w-full grid-cols-2 gap-4 text-left">
