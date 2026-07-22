@@ -12,7 +12,7 @@ import { routeTree } from "./routeTree.gen";
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 if (POSTHOG_KEY) {
 	posthog.init(POSTHOG_KEY, {
-		api_host: "https://us.i.posthog.com",
+		api_host: "ph.ejobtrack.ralphabejuela.com",
 		capture_pageview: "history_change", // SPA route tracking
 		loaded: (ph) => {
 			if (import.meta.env.DEV) ph.opt_out_capturing(); // no dev noise
