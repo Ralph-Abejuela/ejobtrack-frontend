@@ -60,6 +60,9 @@ function JobsContent() {
 		mergeNewModal,
 		setMergeNewModal,
 		handleStatusUpdate,
+		handleDeleteHistoryEntry,
+		handleDeleteJob,
+		handleUpdateJobTitle,
 	} = useJobContext();
 
 	const [undoingMerge, setUndoingMerge] = useState(false);
@@ -199,7 +202,7 @@ function JobsContent() {
 
 			{/* Job list grouped by status */}
 			<JobList
-				jobs={jobs}
+				jobs={jobs.filter((j) => !j.deleted)}
 				grouped={grouped}
 				expandedJob={expandedJob}
 				activeEmailId={activeEmailId}
@@ -208,6 +211,9 @@ function JobsContent() {
 				onToggleExpand={handleToggleExpand}
 				onSelectEmail={setActiveEmailId}
 				onStatusUpdate={handleStatusUpdate}
+				onDeleteHistoryEntry={handleDeleteHistoryEntry}
+				onDelete={handleDeleteJob}
+				onUpdateTitle={handleUpdateJobTitle}
 				syncing={state.syncing}
 				lastSyncTime={state.lastSyncTime}
 				newCount={state.newCount}

@@ -70,6 +70,33 @@ export async function updateJobStatus(
 		{ status, date: change.date, emailId: change.emailId },
 	];
 
+	// Update sort date to reflect latest change (email or manual)
+	job.date = change.date;
+
+	await db.jobs.put(job);
+}
+
+export async function deleteHistoryEntry(
+	id: string,
+	index: number,
+): Promise<void> {
+	const job = await db.jobs.get(id);
+	if (!job) return;
+
+	const removed = job.history[index];
+	job.history = job.history.filter((_, i) => i !== index);
+
+	// Revert job.status + date to the last remaining history entry, or UNKNOWN
+	if (removed && job.history.length > 0) {
+		const last = job.history[job.history.length - 1];
+		job.status = last.status as JobStatus;
+		job.date = last.date;
+	} else if (job.history.length === 0) {
+		job.status = "unknown" as JobStatus;
+		job.date = new Date(0).toISOString();
+	}
+
+	job.updatedAt = Date.now();
 	await db.jobs.put(job);
 }
 
@@ -77,6 +104,43 @@ export async function deleteJob(userEmail: string, id: string): Promise<void> {
 	const job = await db.jobs.get(id);
 	if (!job || job.userEmail !== userEmail) return;
 	await db.jobs.delete(id);
+}
+
+/** Soft-delete a job: mark as deleted and remove from duplicate index. */
+export async function softDeleteJob(
+	userEmail: string,
+	id: string,
+): Promise<boolean> {
+	const job = await db.jobs.get(id);
+	if (!job || job.userEmail !== userEmail) return false;
+
+	await db.transaction("rw", db.jobs, async () => {
+		await db.jobs.put({ ...job, deleted: true, updatedAt: Date.now() });
+	});
+	// Remove from duplicate index
+	await removeFromDuplicateIndex(job.id, job.jobTitle);
+
+	return true;
+}
+
+/** Update a job's title. */
+export async function updateJobTitle(
+	userEmail: string,
+	id: string,
+	newTitle: string,
+): Promise<boolean> {
+	const job = await db.jobs.get(id);
+	if (!job || job.userEmail !== userEmail) return false;
+
+	const oldTitle = job.jobTitle;
+
+	await db.transaction("rw", db.jobs, async () => {
+		await db.jobs.put({ ...job, jobTitle: newTitle, updatedAt: Date.now() });
+	});
+	// Move in duplicate index
+	await moveInDuplicateIndex(job.id, oldTitle, newTitle);
+
+	return true;
 }
 
 export async function getStatusCounts(

@@ -17,7 +17,10 @@ import {
 	undoMerge,
 	unIgnoreGroup,
 	getResolutionHistory,
+	deleteHistoryEntry,
 	updateJobStatus,
+	softDeleteJob,
+	updateJobTitle,
 	type DuplicateGroup,
 	type ResolutionEntry,
 } from "@/lib/jobs-db";
@@ -81,6 +84,9 @@ interface JobContextValue {
 
 	// Actions
 	handleStatusUpdate: (jobId: string, status: JobStatus) => void;
+	handleDeleteHistoryEntry: (jobId: string, index: number) => Promise<void>;
+	handleDeleteJob: (jobId: string) => Promise<void>;
+	handleUpdateJobTitle: (jobId: string, newTitle: string) => Promise<void>;
 }
 
 const JobContext = createContext<JobContextValue | null>(null);
@@ -178,6 +184,13 @@ export function JobProvider({ children }: { children: ReactNode }) {
 	const [fetchingEmail, setFetchingEmail] = useState(false);
 
 	useEffect(() => {
+		if (activeEmailId === "manual") {
+			Promise.resolve().then(() => {
+				setSelectedEmail({ subject: "—", from: "—", body: "Set by user" });
+				setFetchingEmail(false);
+			});
+			return;
+		}
 		if (!activeEmailId || !accessToken) {
 			setSelectedEmail(null);
 			setFetchingEmail(false);
@@ -231,9 +244,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
 
 	// ── Derived ──
 	const grouped = useMemo(() => {
+		const active = jobs.filter((j) => !j.deleted);
 		const map: Record<string, JobApplication[]> = {};
 		for (const s of STATUS_ORDER) map[s] = [];
-		for (const j of jobs) {
+		for (const j of active) {
 			if (map[j.status]) map[j.status].push(j);
 		}
 		return map;
@@ -365,6 +379,34 @@ export function JobProvider({ children }: { children: ReactNode }) {
 		[reload],
 	);
 
+	const handleDeleteJob = useCallback(
+		async (jobId: string) => {
+			if (!user?.email) return;
+			await softDeleteJob(user.email, jobId);
+			toast("Job hidden");
+			await reload();
+		},
+		[user?.email, reload],
+	);
+
+	const handleDeleteHistoryEntry = useCallback(
+		async (jobId: string, index: number) => {
+			await deleteHistoryEntry(jobId, index);
+			await reload();
+		},
+		[reload],
+	);
+
+	const handleUpdateJobTitle = useCallback(
+		async (jobId: string, newTitle: string) => {
+			if (!user?.email) return;
+			await updateJobTitle(user.email, jobId, newTitle);
+			toast("Job title updated");
+			await reload();
+		},
+		[user?.email, reload],
+	);
+
 	const userEmail = user?.email ?? "";
 
 	return (
@@ -401,6 +443,9 @@ export function JobProvider({ children }: { children: ReactNode }) {
 				setActiveEmailId,
 				selectedEmail,
 				fetchingEmail,
+				handleDeleteHistoryEntry,
+				handleDeleteJob,
+				handleUpdateJobTitle,
 				handleStatusUpdate,
 			}}
 		>

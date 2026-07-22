@@ -13,6 +13,9 @@ interface JobListProps {
 	onToggleExpand: (jobId: string) => void;
 	onSelectEmail: (id: string | null) => void;
 	onStatusUpdate: (jobId: string, status: JobStatus) => void;
+	onDeleteHistoryEntry: (jobId: string, index: number) => void;
+	onDelete: (jobId: string) => void;
+	onUpdateTitle: (jobId: string, newTitle: string) => void;
 	syncing: boolean;
 	lastSyncTime: number;
 	newCount: number;
@@ -28,6 +31,9 @@ export default function JobList({
 	onToggleExpand,
 	onSelectEmail,
 	onStatusUpdate,
+	onDeleteHistoryEntry,
+	onDelete,
+	onUpdateTitle,
 	syncing,
 	lastSyncTime,
 	newCount,
@@ -81,6 +87,9 @@ export default function JobList({
 									}}
 									onSelectEmail={onSelectEmail}
 									onStatusUpdate={onStatusUpdate}
+									onDeleteHistoryEntry={onDeleteHistoryEntry}
+									onDelete={onDelete}
+									onUpdateTitle={onUpdateTitle}
 								/>
 							))}
 						</div>

@@ -44,6 +44,8 @@ export interface JobApplication {
 	date: string;
 	/** Email message id (latest email) */
 	emailId: string;
+	/** Soft-deleted — hidden from the UI but still in DB */
+	deleted?: boolean;
 	/** When first detected (epoch ms) */
 	createdAt: number;
 	/** When last updated (epoch ms) */
