@@ -44,6 +44,9 @@ interface JobContextValue {
 	userEmail: string;
 	accessToken: string | null;
 
+	// Loading state
+	loaded: boolean;
+
 	// Jobs data
 	jobs: JobApplication[];
 	statusCounts: Record<string, number>;
@@ -102,16 +105,16 @@ const JobContext = createContext<JobContextValue | null>(null);
 
 export function JobProvider({ children }: { children: ReactNode }) {
 	const { user, accessToken } = useAuth();
-	const { jobs, statusCounts, state, loadMore, reload } = useJobPoller();
+	const { jobs, statusCounts, loaded, state, loadMore, reload } =
+		useJobPoller();
 
 	// ── Show toast once if ML model fails to load ──
 	useEffect(() => {
 		const err = getModelError();
 		if (err) {
 			toast.warning("AI email classifier unavailable", {
-				description:
-					"Falling back to keyword matching. Some non-job emails may slip through.",
-				duration: 8000,
+				description: "Falling back to keyword matching. " + err.slice(0, 200),
+				duration: 10000,
 			});
 		}
 	}, []);
@@ -461,6 +464,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
 			value={{
 				userEmail,
 				accessToken,
+				loaded,
 				jobs,
 				statusCounts,
 				state,

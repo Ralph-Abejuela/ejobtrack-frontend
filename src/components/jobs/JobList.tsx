@@ -50,7 +50,10 @@ export default function JobList({
 			return (
 				<div className="space-y-4">
 					{Array.from({ length: 3 }).map((_, i) => (
-						<div key={i} className="flex flex-col gap-2 rounded-lg border p-4">
+						<div
+							key={i}
+							className="flex flex-col gap-2 rounded-lg border bg-card p-4"
+						>
 							<div className="flex items-center justify-between">
 								<Skeleton className="h-5 w-48" />
 								<Skeleton className="h-4 w-20" />
@@ -98,7 +101,7 @@ export default function JobList({
 							</span>
 						</h2>
 
-						<div className="divide-y rounded-lg border">
+						<div className="divide-y rounded-lg border bg-card">
 							{sectionJobs.map((job) => (
 								<JobCard
 									key={job.id}

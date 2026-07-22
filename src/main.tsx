@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { PostHogProvider } from "posthog-js/react";
 import { posthog } from "posthog-js";
 import "./index.css";
+import { ThemeProvider } from "@/lib/theme-provider";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Import the generated route tree
@@ -41,7 +42,9 @@ if (!rootElement.innerHTML) {
 		<StrictMode>
 			<ErrorBoundary>
 				<PostHogProvider client={posthog}>
-					<RouterProvider router={router} />
+					<ThemeProvider>
+						<RouterProvider router={router} />
+					</ThemeProvider>
 				</PostHogProvider>
 			</ErrorBoundary>
 		</StrictMode>,

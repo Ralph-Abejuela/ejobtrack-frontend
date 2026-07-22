@@ -194,6 +194,7 @@ export function useJobPoller() {
 
 	const [jobs, setJobs] = useState<JobApplication[]>([]);
 	const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+	const [loaded, setLoaded] = useState(false);
 	const [state, setState] = useState<JobPollerState>({
 		syncing: false,
 		lastSyncTime: 0,
@@ -211,6 +212,7 @@ export function useJobPoller() {
 		if (!userEmail) return;
 		setJobs(await getAllJobs(userEmail));
 		setStatusCounts(await getStatusCounts(userEmail));
+		setLoaded(true);
 	}, [userEmail]);
 
 	const loadScanStats = useCallback(async () => {
@@ -524,6 +526,7 @@ export function useJobPoller() {
 	return {
 		jobs,
 		statusCounts,
+		loaded,
 		state,
 		/** Load next 50 older emails */
 		loadMore,

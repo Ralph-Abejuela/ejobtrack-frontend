@@ -16,7 +16,9 @@ async function load(): Promise<void> {
 	if (_classify || _loading) return;
 	_loading = true;
 	try {
-		const { pipeline } = await import("@xenova/transformers");
+		// Use raw URLs instead of resolve URLs to avoid Cloudflare/WAF redirect issues
+		const { pipeline, env } = await import("@xenova/transformers");
+		env.remotePathTemplate = "/{model}/raw/{revision}/{file}";
 		const pipe = await pipeline(
 			"text-classification",
 			"mattohan/job-tracker-email-classifier",

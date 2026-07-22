@@ -7,10 +7,12 @@ import { Toaster } from "@/components/ui/sonner";
 function RootLayout() {
 	return (
 		<AuthProvider>
-			<Header />
-			<main className="mx-auto max-w-3xl px-4 py-6">
-				<Outlet />
-			</main>
+			<div className="flex min-h-dvh flex-col">
+				<Header />
+				<main className="relative flex flex-1 flex-col grid-pattern">
+					<Outlet />
+				</main>
+			</div>
 			<GmailAuthModal />
 			<Toaster closeButton />
 		</AuthProvider>

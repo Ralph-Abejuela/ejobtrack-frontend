@@ -36,7 +36,7 @@ export default function Timeline({
 			<div className="relative flex items-center justify-center">
 				<button
 					onClick={() => handleClick(h)}
-					className={`flex w-full items-center justify-center gap-2 rounded py-2 transition-colors hover:bg-muted/40 ${isSelected ? "bg-amber-50 dark:bg-amber-950" : ""}`}
+					className={`flex w-full items-center justify-center gap-2 rounded py-2 transition-colors hover:bg-muted/40 ${isSelected ? "bg-amber-50 dark:bg-amber-950/30" : ""}`}
 				>
 					<div className={`rounded-full p-1.5 ${cfg.bg}`}>
 						<Icon className={`size-4 ${cfg.color}`} />
@@ -81,7 +81,7 @@ export default function Timeline({
 					<div key={i} className="relative flex items-center">
 						<button
 							onClick={() => handleClick(h)}
-							className={`flex items-center rounded p-1 transition-colors hover:bg-muted/40 ${isSelected ? "bg-amber-50 dark:bg-amber-950" : ""}`}
+							className={`flex items-center rounded p-1 transition-colors hover:bg-muted/40 ${isSelected ? "bg-amber-50 dark:bg-amber-950/30" : ""}`}
 						>
 							<div className="flex flex-col items-center gap-1">
 								<div className={`rounded-full p-1.5 ${cfg.bg}`}>

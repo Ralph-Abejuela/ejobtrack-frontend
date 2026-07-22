@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Progress, ProgressLabel } from "@/components/ui/progress";
 import StatusSummary from "@/components/jobs/StatusSummary";
+import { JobsPageSkeleton } from "@/components/jobs/JobsPageSkeleton";
 import DuplicatesPanel from "@/components/jobs/DuplicatesPanel";
 import JobList from "@/components/jobs/JobList";
 import MergeNewModal from "@/components/jobs/MergeNewModal";
@@ -70,6 +71,7 @@ function JobsPageInner() {
 function JobsContent() {
 	const {
 		jobs,
+		loaded,
 		statusCounts,
 		state,
 		loadMore,
@@ -134,8 +136,10 @@ function JobsContent() {
 		[expandedJob, setExpandedJob, jobs, setActiveEmailId],
 	);
 
+	if (!loaded) return <JobsPageSkeleton />;
+
 	return (
-		<div className="flex flex-col gap-6">
+		<div className="mx-auto md:min-w-2xl w-full max-w-2xl my-6 flex flex-col gap-6">
 			<div className="flex items-center justify-between">
 				<h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
 					<Briefcase className="size-6" /> Job Applications

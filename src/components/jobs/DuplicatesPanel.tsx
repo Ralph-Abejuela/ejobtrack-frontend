@@ -38,11 +38,11 @@ export default function DuplicatesPanel({
 	if (visibleDuplicates.length === 0) return null;
 
 	return (
-		<div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+		<div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-border dark:bg-card">
 			<Button
 				variant="ghost"
 				onClick={onToggleDuplicates}
-				className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-200"
+				className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-300"
 			>
 				<AlertTriangle className="size-4" />
 				{visibleDuplicates.length} duplicate group
@@ -55,8 +55,8 @@ export default function DuplicatesPanel({
 			</Button>
 
 			{showDuplicates && (
-				<div className="space-y-3 border-t border-amber-200 px-4 py-3 dark:border-amber-800">
-					<p className="text-xs text-amber-700 dark:text-amber-300">
+				<div className="space-y-3 border-t border-amber-200 px-4 py-3 dark:border-border">
+					<p className="text-xs text-amber-700 dark:text-amber-400/70">
 						Same job title, multiple company names — select records to merge or
 						merge into a new entry.
 					</p>
@@ -68,10 +68,10 @@ export default function DuplicatesPanel({
 						return (
 							<div
 								key={group.groupKey}
-								className="rounded-lg border border-amber-300 bg-white p-3 dark:border-amber-700 dark:bg-amber-900/30"
+								className="rounded-lg border border-amber-300 bg-white p-3 dark:border-border dark:bg-muted"
 							>
 								<div className="flex items-center justify-between gap-2">
-									<p className="truncate text-xs font-medium text-amber-900 dark:text-amber-100">
+									<p className="truncate text-xs font-medium text-amber-900 dark:text-amber-300">
 										{group.jobs[0].jobTitle}
 									</p>
 									<Button
@@ -99,11 +99,11 @@ export default function DuplicatesPanel({
 													variant="ghost"
 													size="xs"
 													onClick={() => onScrollToJob(j.id)}
-													className="min-w-0 flex-1 truncate text-left"
+													className="min-w-0 flex-1 truncate text-left hover:underline"
 												>
 													{j.company}
 													{checked && (
-														<span className="ml-1.5 text-[10px] text-amber-500">
+														<span className="ml-1.5 text-[10px] text-amber-400">
 															selected
 														</span>
 													)}
