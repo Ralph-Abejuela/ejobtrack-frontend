@@ -1,6 +1,11 @@
 import { useEffect, useCallback, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { listMessages, getMessage, parseMessage } from "@/lib/gmail";
+import {
+	listMessages,
+	getMessage,
+	parseMessage,
+	RateLimitError,
+} from "@/lib/gmail";
 import { parseEmail } from "@/lib/jobs/registry";
 import {
 	getAllJobs,
@@ -9,6 +14,13 @@ import {
 	addToDuplicateIndex,
 } from "@/lib/jobs-db";
 import { markScanned, isScanned, getScannedCount } from "@/lib/jobs-cache";
+import {
+	enqueue,
+	markBatchCompleted,
+	clearQueue,
+	getQueueSize,
+} from "@/lib/retry-queue";
+import { useRetryLoop } from "@/lib/use-retry-loop";
 import { classifyEmail } from "@/lib/classify-email";
 import type { JobApplication } from "@/lib/jobs/types";
 import { stringSimilarity, COMPANY_SIMILARITY_THRESHOLD } from "@/lib/utils";
@@ -30,6 +42,8 @@ interface JobPollerState {
 	batchProcessed: number;
 	/** Progress: total emails in current batch */
 	batchTotal: number;
+	/** Number of pending retries in the queue */
+	queueSize: number;
 }
 
 /** Epoch ms → YYYY/MM/DD for Gmail search. */
@@ -45,17 +59,24 @@ async function processEmails(
 	ids: string[],
 	onProgress?: (processed: number, total: number) => void,
 ): Promise<{ newJobs: number }> {
-	const emails = (
-		await Promise.all(
-			ids.map(async (id) => {
-				try {
-					return parseMessage(await getMessage(accessToken, id, "full"));
-				} catch {
-					return null;
+	const results = await Promise.all(
+		ids.map(async (id) => {
+			try {
+				const email = parseMessage(await getMessage(accessToken, id, "full"));
+				return { type: "success" as const, email };
+			} catch (err) {
+				if (err instanceof RateLimitError) {
+					enqueue(id, err.message);
+					return { type: "rate_limited" as const };
 				}
-			}),
-		)
-	).filter((e): e is NonNullable<typeof e> => e !== null);
+				return { type: "error" as const };
+			}
+		}),
+	);
+
+	const emails = results
+		.filter((r) => r.type === "success")
+		.map((r) => r.email);
 
 	// Cache fetched emails so timeline viewer doesn't re-fetch
 	await storeEmails(userEmail, emails);
@@ -204,6 +225,7 @@ export function useJobPoller() {
 		oldestScanned: null,
 		batchProcessed: 0,
 		batchTotal: 0,
+		queueSize: 0,
 	});
 
 	const pollingRef = useRef(false);
@@ -309,6 +331,7 @@ export function useJobPoller() {
 				lastSyncTime: nowMs,
 				newCount: newJobs,
 				scannedCount,
+				queueSize: getQueueSize(),
 				oldestScanned: oldestTs
 					? new Date(oldestTs).toLocaleDateString("en-US", {
 							month: "short",
@@ -317,10 +340,12 @@ export function useJobPoller() {
 						})
 					: null,
 			}));
+			markBatchCompleted();
 		} catch (err) {
 			setState((s) => ({
 				...s,
 				syncing: false,
+				queueSize: getQueueSize(),
 				syncError: err instanceof Error ? err.message : "Sync failed",
 			}));
 		} finally {
@@ -396,11 +421,14 @@ export function useJobPoller() {
 				batchTotal: 0,
 				newCount: newJobs,
 				scannedCount,
+				queueSize: getQueueSize(),
 			}));
+			markBatchCompleted();
 		} catch (err) {
 			setState((s) => ({
 				...s,
 				syncing: false,
+				queueSize: getQueueSize(),
 				syncError:
 					err instanceof Error ? err.message : "New email check failed",
 			}));
@@ -479,6 +507,7 @@ export function useJobPoller() {
 				lastSyncTime: nowMs,
 				newCount: newJobs,
 				scannedCount,
+				queueSize: getQueueSize(),
 				oldestScanned: updatedCrawl.oldestTs
 					? new Date(updatedCrawl.oldestTs).toLocaleDateString("en-US", {
 							month: "short",
@@ -487,10 +516,12 @@ export function useJobPoller() {
 						})
 					: null,
 			}));
+			markBatchCompleted();
 		} catch (err) {
 			setState((s) => ({
 				...s,
 				syncing: false,
+				queueSize: getQueueSize(),
 				syncError: err instanceof Error ? err.message : "Load more failed",
 			}));
 		} finally {
@@ -523,6 +554,16 @@ export function useJobPoller() {
 		return () => document.removeEventListener("visibilitychange", onFocus);
 	}, [accessToken, userEmail, checkNewEmails]);
 
+	// Retry loop — background processor for rate-limited message fetches
+	useRetryLoop(accessToken, userEmail, loadJobs);
+
+	// Clear retry queue on sign-out
+	useEffect(() => {
+		if (!userEmail) {
+			clearQueue();
+		}
+	}, [userEmail]);
+
 	return {
 		jobs,
 		statusCounts,
@@ -535,6 +576,8 @@ export function useJobPoller() {
 		/** Initial fetch on mount */
 		initialSync,
 		reload: loadJobs,
+		/** Number of pending retries in the queue */
+		queueSize: state.queueSize,
 	};
 }
 

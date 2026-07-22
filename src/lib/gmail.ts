@@ -4,6 +4,18 @@ import { htmlToText } from "html-to-text";
 
 const BASE_URL = "https://gmail.googleapis.com/gmail/v1/users/me";
 
+// ── Rate-limit error ───────────────────────────────────────────────────────
+
+export class RateLimitError extends Error {
+	readonly retryAfter: string | undefined;
+
+	constructor(message: string, retryAfter?: string) {
+		super(message);
+		this.name = "RateLimitError";
+		this.retryAfter = retryAfter;
+	}
+}
+
 /**
  * Called when any Gmail API call gets a 401 response.
  * Should try to refresh the token and return a new one,
@@ -33,12 +45,26 @@ async function fetchWithRetry(
 
 	let res = await fetch(url, { ...options, headers });
 
+	// 429 rate limit — throw immediately so callers can enqueue
+	if (res.status === 429) {
+		const retryAfter = res.headers.get("Retry-After") ?? undefined;
+		const body = await res.text().catch(() => "rate limited");
+		throw new RateLimitError(`Gmail API 429: ${body}`, retryAfter);
+	}
+
 	if (res.status === 401 && _onUnauthorized) {
 		const newToken = await _onUnauthorized();
 		if (newToken) {
 			headers.Authorization = `Bearer ${newToken}`;
 			res = await fetch(url, { ...options, headers });
 		}
+	}
+
+	// Check 429 again after token refresh (unlikely but possible)
+	if (res.status === 429) {
+		const retryAfter = res.headers.get("Retry-After") ?? undefined;
+		const body = await res.text().catch(() => "rate limited");
+		throw new RateLimitError(`Gmail API 429: ${body}`, retryAfter);
 	}
 
 	return res;
