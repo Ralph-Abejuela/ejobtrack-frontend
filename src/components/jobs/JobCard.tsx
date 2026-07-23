@@ -26,6 +26,7 @@ import {
 	SelectContent,
 	SelectItem,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface JobCardProps {
 	job: JobApplication;
@@ -253,11 +254,13 @@ export default function JobCard({
 					</div>
 
 					{selEntry?.emailId !== "manual" && (
-						<pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded bg-muted/50 p-3 font-sans text-xs leading-relaxed">
-							{fetchingEmail
-								? "Loading…"
-								: (selectedEmail?.body ?? (job.body || "(no body)"))}
-						</pre>
+						<ScrollArea className="mt-3 h-64 rounded bg-muted/50">
+							<pre className="whitespace-pre-wrap break-words p-3 font-sans text-xs leading-relaxed">
+								{fetchingEmail
+									? "Loading…"
+									: (selectedEmail?.body ?? (job.body || "(no body)"))}
+							</pre>
+						</ScrollArea>
 					)}
 				</div>
 			</CollapsibleContent>
