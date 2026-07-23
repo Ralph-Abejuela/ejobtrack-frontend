@@ -538,6 +538,7 @@ export async function mergeIntoNew(
 	const allDates = valid.map((r) => ({
 		date: r.date,
 		emailId: r.emailId,
+		status: r.status,
 		ts: new Date(r.date).getTime(),
 	}));
 	allDates.sort((a, b) => b.ts - a.ts);
@@ -551,6 +552,7 @@ export async function mergeIntoNew(
 			history: merged,
 			date: latest.date,
 			emailId: latest.emailId,
+			status: latest.status,
 			updatedAt: Date.now(),
 		});
 		for (const r of toRemove) {
