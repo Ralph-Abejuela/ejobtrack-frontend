@@ -198,12 +198,14 @@ export function JobProvider({ children }: { children: ReactNode }) {
 			setDuplicates(result);
 
 			// Auto un-ignore dismissed groups when new jobs joined them
+			// pruneStaleDismissals runs inside the function updater so it
+			// always reads the latest dismissed state — avoids stale closure.
 			const groups = result.map((g) => ({
 				groupKey: g.groupKey,
 				count: g.jobs.length,
 			}));
-			const fresh = pruneStaleDismissals(dismissed, groups);
 			setDismissed((prev) => {
+				const fresh = pruneStaleDismissals(prev, groups);
 				const prevKeys = Object.keys(prev);
 				const freshKeys = Object.keys(fresh);
 				const changed =
