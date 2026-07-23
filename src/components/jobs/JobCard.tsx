@@ -2,6 +2,7 @@ import {
 	ExternalLink,
 	Pencil,
 	Trash2,
+	Merge,
 	Loader2,
 	ChevronDown,
 	ChevronUp,
@@ -38,6 +39,7 @@ interface JobCardProps {
 	onDeleteHistoryEntry: (jobId: string, index: number) => void;
 	onDelete: (jobId: string) => void;
 	onUpdateTitle: (jobId: string, newTitle: string) => void;
+	onMergeWith: (jobId: string) => void;
 }
 
 export default function JobCard({
@@ -52,6 +54,7 @@ export default function JobCard({
 	onDeleteHistoryEntry,
 	onDelete,
 	onUpdateTitle,
+onMergeWith,
 }: JobCardProps) {
 	const [editingTitle, setEditingTitle] = useState(false);
 	const [titleDraft, setTitleDraft] = useState(job.jobTitle);
@@ -212,7 +215,15 @@ export default function JobCard({
 								<Pencil data-icon="inline-start" />
 								Edit Title
 							</Button>
-							<Button
+						<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => onMergeWith(job.id)}
+						>
+								<Merge data-icon="inline-start" />
+								Merge With
+						</Button>
+						<Button
 								variant="destructive"
 								className={"bg-transparent"}
 								size="sm"
@@ -220,7 +231,7 @@ export default function JobCard({
 							>
 								<Trash2 data-icon="inline-start" />
 								Hide Job
-							</Button>
+						</Button>
 						</div>
 					</div>
 

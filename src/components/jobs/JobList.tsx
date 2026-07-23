@@ -23,6 +23,7 @@ interface JobListProps {
 	onDeleteHistoryEntry: (jobId: string, index: number) => void;
 	onDelete: (jobId: string) => void;
 	onUpdateTitle: (jobId: string, newTitle: string) => void;
+	onMergeWith: (jobId: string) => void;
 	syncing: boolean;
 	lastSyncTime: number;
 	newCount: number;
@@ -41,6 +42,7 @@ export default function JobList({
 	onDeleteHistoryEntry,
 	onDelete,
 	onUpdateTitle,
+	onMergeWith,
 	syncing,
 	lastSyncTime,
 	newCount,
@@ -124,6 +126,7 @@ export default function JobList({
 									onDeleteHistoryEntry={onDeleteHistoryEntry}
 									onDelete={onDelete}
 									onUpdateTitle={onUpdateTitle}
+									onMergeWith={onMergeWith}
 								/>
 							))}
 						</div>

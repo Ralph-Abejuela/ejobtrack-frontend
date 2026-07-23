@@ -501,15 +501,17 @@ export async function mergeJobs(
 }
 
 /**
- * Merge multiple jobs into one. If newCompany/newTitle are provided, the
- * kept record gets those values; otherwise the longest company name and
- * the existing jobTitle are used. All selected jobs' history is consolidated.
+ * Merge multiple jobs into one. If keepId is provided, that record is kept;
+ * otherwise the longest company name is used. If newCompany/newTitle are
+ * provided, the kept record gets those values. All selected jobs' history
+ * is consolidated.
  */
 export async function mergeIntoNew(
 	userEmail: string,
 	jobIds: string[],
 	newCompany?: string,
 	newTitle?: string,
+	keepId?: string,
 ): Promise<boolean> {
 	if (jobIds.length < 2) return false;
 
@@ -519,42 +521,57 @@ export async function mergeIntoNew(
 	);
 	if (valid.length < 2) return false;
 
-	// Pick keep: longest company name, or first if equal
-	valid.sort((a, b) => b.company.length - a.company.length);
-	const keep = valid[0];
-	const toRemove = valid.slice(1);
+	// Pick keep: explicit keepId, or longest company name
+	let keep: JobApplication;
+	let toRemove: JobApplication[];
+	if (keepId) {
+		const found = valid.find((j) => j.id === keepId);
+		if (!found) return false;
+		keep = found;
+		toRemove = valid.filter((j) => j.id !== keepId);
+	} else {
+		valid.sort((a, b) => b.company.length - a.company.length);
+		keep = valid[0];
+		toRemove = valid.slice(1);
+	}
 
 	// Snapshot all records before mutating
 	const keepSnapshot = { ...keep };
 	const removeSnapshots = toRemove.map((r) => ({ ...r }));
 
-	// Merge history from all, sorted by date
+	// Merge history from all, sorted by date (ascending)
 	const merged = toRemove
 		.flatMap((r) => r.history)
 		.concat(keep.history)
 		.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-	// Keep the latest date/status/emailId
+	// Latest status/date from the merged history (last entry = most recent)
+	const lastEntry = merged.length > 0 ? merged[merged.length - 1] : null;
+	const latestStatus = lastEntry?.status ?? keep.status;
+	const latestDate = lastEntry?.date ?? keep.date;
+
+	// Pick the emailId to keep: use the latest record's emailId
 	const allDates = valid.map((r) => ({
-		date: r.date,
+		id: r.id,
 		emailId: r.emailId,
-		status: r.status,
 		ts: new Date(r.date).getTime(),
 	}));
 	allDates.sort((a, b) => b.ts - a.ts);
-	const latest = allDates[0];
+	const latestEmailId =
+		allDates.length > 0 ? allDates[0].emailId : keep.emailId;
 
 	await db.transaction("rw", db.jobs, async () => {
-		await db.jobs.put({
+		const update = {
 			...keep,
 			company: newCompany ?? keep.company,
 			jobTitle: newTitle ?? keep.jobTitle,
 			history: merged,
-			date: latest.date,
-			emailId: latest.emailId,
-			status: latest.status,
+			date: latestDate,
+			emailId: latestEmailId,
+			status: latestStatus,
 			updatedAt: Date.now(),
-		});
+		};
+		await db.jobs.put(update);
 		for (const r of toRemove) {
 			await db.jobs.delete(r.id);
 		}

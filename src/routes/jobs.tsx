@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useJobContext, JobProvider } from "@/components/jobs/JobContext";
-import { undoMerge } from "@/lib/jobs-db";
+import { undoMerge, mergeIntoNew } from "@/lib/jobs-db";
 import HiddenJobsPanel from "@/components/jobs/HiddenJobsPanel";
+import MergeWithDialog from "@/components/jobs/MergeWithDialog";
 import {
 	Sheet,
 	SheetTrigger,
@@ -10,7 +11,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
 	Loader2,
 	RefreshCw,
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Progress, ProgressLabel } from "@/components/ui/progress";
 import StatusSummary from "@/components/jobs/StatusSummary";
+import { toast } from "sonner";
 import { JobsPageSkeleton } from "@/components/jobs/JobsPageSkeleton";
 import DuplicatesPanel from "@/components/jobs/DuplicatesPanel";
 import JobList from "@/components/jobs/JobList";
@@ -141,7 +143,9 @@ function JobsContent() {
 		handleRestore,
 	} = useJobContext();
 
+	const [mergeWithJobId, setMergeWithJobId] = useState<string | null>(null);
 	const [undoingMerge, setUndoingMerge] = useState(false);
+	const [mergingWith, setMergingWith] = useState(false);
 
 	const handleUndoMerge = useCallback(
 		async (timestamp: number) => {
@@ -171,6 +175,43 @@ function JobsContent() {
 			}
 		},
 		[expandedJob, setExpandedJob, jobs, handleSelectEmail],
+	);
+
+	const mergeWithSourceJob = useMemo(
+		() => (mergeWithJobId ? jobs.find((j) => j.id === mergeWithJobId) : null),
+		[mergeWithJobId, jobs],
+	);
+
+	const mergeWithTargets = useMemo(
+		() => jobs.filter((j) => !j.deleted && j.id !== mergeWithJobId),
+		[mergeWithJobId, jobs],
+	);
+
+	const handleMergeWith = useCallback(
+		async (sourceJobId: string, selectedJobIds: string[]) => {
+			if (!user?.email) return;
+			setMergingWith(true);
+			try {
+				const ok = await mergeIntoNew(
+					user.email,
+					[sourceJobId, ...selectedJobIds],
+					undefined,
+					undefined,
+					sourceJobId,
+				);
+				if (ok) {
+					refreshResolutionHistory();
+					await reload();
+					toast(`Merged ${selectedJobIds.length + 1} records`, {
+						position: "bottom-right",
+					});
+					setMergeWithJobId(null);
+				}
+			} finally {
+				setMergingWith(false);
+			}
+		},
+		[user?.email, reload],
 	);
 
 	if (!loaded) return <JobsPageSkeleton />;
@@ -288,10 +329,24 @@ function JobsContent() {
 				onDeleteHistoryEntry={handleDeleteHistoryEntry}
 				onDelete={handleDeleteJob}
 				onUpdateTitle={handleUpdateJobTitle}
+				onMergeWith={setMergeWithJobId}
 				syncing={state.syncing}
 				lastSyncTime={state.lastSyncTime}
 				newCount={state.newCount}
 			/>
+
+			{mergeWithSourceJob && (
+				<MergeWithDialog
+					open={!!mergeWithJobId}
+					onOpenChange={(open) => {
+						if (!open) setMergeWithJobId(null);
+					}}
+					sourceJob={mergeWithSourceJob}
+					jobs={mergeWithTargets}
+					onMerge={handleMergeWith}
+					merging={mergingWith}
+				/>
+			)}
 		</div>
 	);
 }

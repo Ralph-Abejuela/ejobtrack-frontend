@@ -46,34 +46,36 @@ function SheetContent({
 	return (
 		<SheetPortal>
 			<SheetOverlay />
-			<DrawerPrimitive.Popup
-				data-slot="sheet-content"
-				className={cn(
-					"fixed top-0 z-50 isolate flex h-full w-full max-w-xs flex-col bg-popover text-popover-foreground ring-1 ring-foreground/10 shadow-lg duration-100 outline-none data-open:animate-in data-closed:animate-out sm:max-w-sm",
-					side === "right"
-						? "right-0 data-open:slide-in-from-right-full data-closed:slide-out-to-right-full"
-						: "left-0 data-open:slide-in-from-left-full data-closed:slide-out-to-left-full",
-					className,
-				)}
-				{...props}
-			>
-				{children}
-				{showCloseButton && (
-					<DrawerPrimitive.Close
-						data-slot="sheet-close"
-						render={
-							<Button
-								variant="ghost"
-								className="absolute top-2 right-2"
-								size="icon-sm"
-							/>
-						}
-					>
-						<XIcon />
-						<span className="sr-only">Close</span>
-					</DrawerPrimitive.Close>
-				)}
-			</DrawerPrimitive.Popup>
+			<DrawerPrimitive.Viewport className="fixed inset-0 z-50 isolate flex pointer-events-none">
+				<DrawerPrimitive.Popup
+					data-slot="sheet-content"
+					className={cn(
+						"pointer-events-auto flex h-full w-full max-w-xs flex-col bg-popover text-popover-foreground ring-1 ring-foreground/10 shadow-lg duration-100 outline-none data-open:animate-in data-closed:animate-out sm:max-w-sm",
+						side === "right"
+							? "ml-auto data-open:slide-in-from-right-full data-closed:slide-out-to-right-full"
+							: "mr-auto data-open:slide-in-from-left-full data-closed:slide-out-to-left-full",
+						className,
+					)}
+					{...props}
+				>
+					{children}
+					{showCloseButton && (
+						<DrawerPrimitive.Close
+							data-slot="sheet-close"
+							render={
+								<Button
+									variant="ghost"
+									className="absolute top-2 right-2"
+									size="icon-sm"
+								/>
+							}
+						>
+							<XIcon />
+							<span className="sr-only">Close</span>
+						</DrawerPrimitive.Close>
+					)}
+				</DrawerPrimitive.Popup>
+			</DrawerPrimitive.Viewport>
 		</SheetPortal>
 	);
 }
