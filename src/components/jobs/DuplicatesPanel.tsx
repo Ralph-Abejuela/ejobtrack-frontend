@@ -19,7 +19,6 @@ interface DuplicatesPanelProps {
 	onDismiss: (groupKey: string) => void;
 	onToggleSelect: (jobId: string) => void;
 	onMergeSelected: (groupKey: string) => void;
-	onMergeNew: (groupKey: string) => void;
 	onScrollToJob: (jobId: string) => void;
 }
 
@@ -32,7 +31,6 @@ export default function DuplicatesPanel({
 	onDismiss,
 	onToggleSelect,
 	onMergeSelected,
-	onMergeNew,
 	onScrollToJob,
 }: DuplicatesPanelProps) {
 	if (visibleDuplicates.length === 0) return null;
@@ -57,8 +55,7 @@ export default function DuplicatesPanel({
 			{showDuplicates && (
 				<div className="space-y-3 border-t border-amber-200 px-4 py-3 dark:border-border">
 					<p className="text-xs text-amber-700 dark:text-amber-400/70">
-						Same job title, multiple company names — select records to merge or
-						merge into a new entry.
+						Same job title, multiple company names — select records to merge.
 					</p>
 
 					{visibleDuplicates.map((group) => {
@@ -134,14 +131,6 @@ export default function DuplicatesPanel({
 											<Merge data-icon="inline-start" />
 										)}
 										Merge selected{selCount >= 2 ? ` (${selCount})` : ""}
-									</Button>
-									<Button
-										variant="outline"
-										size="xs"
-										onClick={() => onMergeNew(group.groupKey)}
-										disabled={selCount < 2}
-									>
-										Merge into new…
 									</Button>
 								</div>
 							</div>

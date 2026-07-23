@@ -24,7 +24,6 @@ import StatusSummary from "@/components/jobs/StatusSummary";
 import { JobsPageSkeleton } from "@/components/jobs/JobsPageSkeleton";
 import DuplicatesPanel from "@/components/jobs/DuplicatesPanel";
 import JobList from "@/components/jobs/JobList";
-import MergeNewModal from "@/components/jobs/MergeNewModal";
 
 export const Route = createFileRoute("/jobs")({
 	component: () => (
@@ -131,9 +130,6 @@ function JobsContent() {
 		handleDismiss,
 		toggleSelect,
 		handleMergeSelected,
-		handleMergeNew,
-		mergeNewModal,
-		setMergeNewModal,
 		handleStatusUpdate,
 		handleDeleteHistoryEntry,
 		handleDeleteJob,
@@ -265,7 +261,6 @@ function JobsContent() {
 				onDismiss={handleDismiss}
 				onToggleSelect={toggleSelect}
 				onMergeSelected={handleMergeSelected}
-				onMergeNew={(gk) => setMergeNewModal({ groupKey: gk })}
 				onScrollToJob={(jobId) => {
 					setExpandedJob(expandedJob === jobId ? null : jobId);
 					requestAnimationFrame(() => {
@@ -275,17 +270,6 @@ function JobsContent() {
 					});
 				}}
 			/>
-
-			{mergeNewModal && (
-				<MergeNewModal
-					groupKey={mergeNewModal.groupKey}
-					selectedJobs={selectedJobs}
-					duplicates={visibleDuplicates}
-					merging={merging}
-					onMerge={handleMergeNew}
-					onClose={() => setMergeNewModal(null)}
-				/>
-			)}
 
 			<StatusSummary statusCounts={statusCounts} />
 

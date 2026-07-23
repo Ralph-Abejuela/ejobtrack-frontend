@@ -70,11 +70,6 @@ interface JobContextValue {
 	handleDismiss: (groupKey: string) => void;
 	toggleSelect: (jobId: string) => void;
 	handleMergeSelected: (groupKey: string) => void;
-	handleMergeNew: (groupKey: string, company: string, title: string) => void;
-
-	// Merge into New modal
-	mergeNewModal: { groupKey: string } | null;
-	setMergeNewModal: (v: { groupKey: string } | null) => void;
 
 	// Resolution history
 	resolutionHistory: ResolutionEntry[];
@@ -117,9 +112,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
 	const [selectedJobs, setSelectedJobs] = useState<Set<string>>(
 		() => new Set(),
 	);
-	const [mergeNewModal, setMergeNewModal] = useState<{
-		groupKey: string;
-	} | null>(null);
+
 	const [restoringId, setRestoringId] = useState<string | null>(null);
 	const [resolutionHistory, setResolutionHistory] = useState<ResolutionEntry[]>(
 		[],
@@ -148,7 +141,6 @@ export function JobProvider({ children }: { children: ReactNode }) {
 		setActiveEmailId(null);
 		setSelectedEmail(null);
 		setFetchingEmail(false);
-		setMergeNewModal(null);
 		setSelectedJobs(new Set());
 		setMerging(null);
 
@@ -400,45 +392,6 @@ export function JobProvider({ children }: { children: ReactNode }) {
 		[selectedJobs, user?.email, reload],
 	);
 
-	const handleMergeNew = useCallback(
-		async (groupKey: string, company: string, title: string) => {
-			const ids = [...selectedJobs];
-			if (ids.length < 2 || !user?.email) return;
-			setMerging(`new:${groupKey}`);
-			try {
-				const ok = await mergeIntoNew(user.email, ids, company, title);
-				if (ok) {
-					await reload();
-					setResolutionHistory(getResolutionHistory(user.email));
-					setSelectedJobs(new Set());
-					setMergeNewModal(null);
-					const ts = getResolutionHistory(user.email)[0]?.timestamp;
-					toast(`Merged into "${company}"`, {
-						position: "bottom-right",
-						action: {
-							label: "Undo merge",
-							onClick: () => {
-								if (!ts) return;
-								setUndoing(true);
-								undoMerge(user.email, ts)
-									.then((ok) => {
-										if (ok) {
-											setResolutionHistory(getResolutionHistory(user.email));
-											reload();
-										}
-									})
-									.finally(() => setUndoing(false));
-							},
-						},
-					});
-				}
-			} finally {
-				setMerging(null);
-			}
-		},
-		[selectedJobs, user?.email, reload],
-	);
-
 	const handleStatusUpdate = useCallback(
 		async (jobId: string, status: JobStatus) => {
 			await updateJobStatus(jobId, status, {
@@ -523,9 +476,6 @@ export function JobProvider({ children }: { children: ReactNode }) {
 				handleDismiss,
 				toggleSelect,
 				handleMergeSelected,
-				handleMergeNew,
-				mergeNewModal,
-				setMergeNewModal,
 				resolutionHistory,
 				refreshResolutionHistory,
 				showHistory,
