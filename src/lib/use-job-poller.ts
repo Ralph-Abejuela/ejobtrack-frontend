@@ -414,11 +414,14 @@ export function useJobPoller() {
 			localStorage.setItem(`job_forward_ms_${userEmail}`, String(Date.now()));
 			await loadJobs();
 			const scannedCount = await getScannedCount(userEmail);
+			const nowMs = Date.now();
+			localStorage.setItem(`job_sync_ms_${userEmail}`, String(nowMs));
 			setState((s) => ({
 				...s,
 				syncing: false,
 				batchProcessed: 0,
 				batchTotal: 0,
+				lastSyncTime: nowMs,
 				newCount: newJobs,
 				scannedCount,
 				queueSize: getQueueSize(),

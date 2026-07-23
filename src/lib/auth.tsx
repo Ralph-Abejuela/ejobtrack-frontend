@@ -185,11 +185,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	}, [handleCredentialResponse, state.user]);
 
+	// Guard: single in-flight refresh at a time
+	const refreshingRef = useRef(false);
+	const refreshResultRef = useRef<Promise<string | null> | null>(null);
+
 	// --- Sign out ---
 	const signOut = useCallback(() => {
 		sessionStorage.removeItem(SESSION_KEY);
 		setOnUnauthorized(null); // prevent retry loops
 		gmailTokenClientRef.current = null;
+		refreshingRef.current = false;
+		refreshResultRef.current = null;
 
 		setState({
 			user: null,
@@ -203,22 +209,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	// Wire 401 → try silent token refresh, fall back to signOut
 	const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-		return new Promise((resolve) => {
+		// Dedup concurrent calls — if a refresh is already in flight, wait for it
+		if (refreshingRef.current && refreshResultRef.current) {
+			return refreshResultRef.current;
+		}
+
+		const promise = new Promise<string | null>((resolve) => {
+			refreshingRef.current = true;
+
+			// Timeout guard — if TokenClient callback never fires, don't hang forever
+			// Silent iframe auth either resolves in <100ms or never fires (privacy blockers)
+			const timeout = setTimeout(() => {
+				console.warn("[auth] Token refresh timed out — signing out");
+				refreshingRef.current = false;
+				refreshResultRef.current = null;
+				signOut();
+				resolve(null);
+			}, 5_000);
+
 			const refreshClient = google.accounts.oauth2.initTokenClient({
 				client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
 				scope: "https://www.googleapis.com/auth/gmail.readonly",
 				prompt: "", // silent — no popup if user already granted
 				callback: (tokenResponse) => {
+					clearTimeout(timeout);
+					refreshingRef.current = false;
+					refreshResultRef.current = null;
+
 					if (tokenResponse?.access_token) {
 						setState((prev) => ({
 							...prev,
 							accessToken: tokenResponse.access_token,
 						}));
-						if (state.idToken)
-							persist(state.idToken, tokenResponse.access_token);
+						// Use latest idToken from ref, not stale closure
+						setState((prev) => {
+							if (prev.idToken)
+								persist(prev.idToken, tokenResponse.access_token!);
+							return prev;
+						});
 						resolve(tokenResponse.access_token);
 					} else {
-						// Silent refresh failed — force re-consent
+						console.warn("[auth] Silent token refresh failed — signing out");
 						signOut();
 						resolve(null);
 					}
@@ -226,7 +257,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			});
 			refreshClient.requestAccessToken();
 		});
-	}, [state.idToken, signOut, persist]);
+
+		refreshResultRef.current = promise;
+		return promise;
+	}, [signOut, persist]);
 
 	useEffect(() => {
 		setOnUnauthorized(refreshAccessToken);
