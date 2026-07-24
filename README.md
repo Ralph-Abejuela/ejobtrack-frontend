@@ -183,7 +183,7 @@ PRs welcome. Add your platform parser as one file in `src/lib/jobs/`. See `gener
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache License. See [LICENSE](LICENSE).
 
 ---
 
