@@ -141,16 +141,16 @@ These are intentional constraints that keep your data inside your browser.
 
 ## Roadmap
 
-| Feature                                                                                                               | Status         |
-| --------------------------------------------------------------------------------------------------------------------- | -------------- |
-| **Data export/import:** JSON backup and restore so your data is never locked in. | 🚧 In progress |
-| **Saved filter presets:** bookmark combos like "Interview stage + this week." | 📋 Planned |
-| **Analytics dashboard:** view applications per week, interview conversion rate, and response time distribution. | 📋 Planned |
-| **Calendar view:** interview dates extracted from emails with one-click Google Calendar add. | 📋 Planned |
-| **Custom status labels:** define your own pipeline stages like Phone Screen, Take-home, or Final Round. | 📋 Planned |
-| **Outlook / Microsoft Graph API:** same read-only OAuth flow and parser pipeline with zero-server architecture. | 📋 Planned |
-| **PWA install:** manifest and service worker. Already offline, just needs the install layer. | 📋 Planned |
-| **In-app changelog:** release notes shown on first load after update. | 📋 Planned |
+| Feature | What | Status |
+|---|---|---|
+| **Data export/import** | JSON backup and restore so your data is never locked in | 🚧 In progress |
+| **Saved filter presets** | Bookmark combos like "Interview stage + this week" | 📋 Planned |
+| **Analytics dashboard** | Applications per week, interview conversion rate, response time distribution | 📋 Planned |
+| **Calendar view** | Interview dates extracted from emails with one-click Google Calendar add | 📋 Planned |
+| **Custom status labels** | Define your own pipeline stages like Phone Screen, Take-home, or Final Round | 📋 Planned |
+| **Outlook / Microsoft Graph API** | Same read-only OAuth flow and parser pipeline with zero-server architecture | 📋 Planned |
+| **PWA install** | Manifest and service worker. Already offline, just needs the install layer | 📋 Planned |
+| **In-app changelog** | Release notes shown on first load after update | 📋 Planned |
 
 **Architectural non-goals:** Push notifications, cross-device sync, and server-side ML will never ship. Any feature that requires a backend is out of scope.
 
