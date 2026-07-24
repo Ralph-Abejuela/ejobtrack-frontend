@@ -1,8 +1,8 @@
 <h1 align="center">ejobtrack</h1>
 
 <p align="center">
-  <b>Auto-track job applications from your Gmail inbox.</b>
-  No backend. No data leaves your browser.
+  <b>There is no server.</b><br>
+  A job tracker that runs entirely in your browser.
 </p>
 
 <p align="center">
@@ -30,61 +30,51 @@
   </a>
 </p>
 
----
+## What this is
 
-## Quick Start
+ejobtrack reads your Gmail inbox and builds a complete job-search timeline automatically.
 
-```bash
-git clone https://github.com/Ralph-Abejuela/ejobtrack.git
-cd ejobtrack
-pnpm install
-```
+**There is no server.** Your Gmail tokens, your emails, and your job data never leave your browser. The app is a static React bundle. The ML model runs on-device via Transformers.js. Everything stores in IndexedDB. You can open DevTools and verify this yourself.
 
-Copy `.env.example` to `.env`, add your Google Client ID, then:
-
-```bash
-pnpm dev     # local dev at localhost:5173
-pnpm build   # static dist/ for any host
-```
-
-**Prerequisites:** Node.js 22+, pnpm, a Google Cloud Project with Gmail API enabled.
+> **Zero infrastructure. Zero server cost. Zero data leaves your machine.**  
+> This is an architectural guarantee, not a privacy policy.
 
 ---
 
-## Why Another Job Tracker?
+## Why this exists
 
-Every tracker I found wanted manual input: company, role, date, status. Spreadsheet with extra steps.
+Every tracker I tried was a spreadsheet with extra steps: company, role, date, status. All manual.
 
-ejobtrack reads your inbox instead. Sign in with Google, and it scans Gmail automatically — finds job applications, detects status changes, builds your timeline. No typing. No data entry.
+Worse, every tracker had a backend. That means someone else holds the keys to my inbox. Every privacy breach starts with "we trusted the server."
 
-**Why not a server?** A server means I hold your email tokens. Your data goes through someone else's network. Every privacy breach starts with "we trusted the server."
-
-ejobtrack runs entirely in your browser. Gmail API calls go direct from the client. ML classification happens on-device via Transformers.js. Everything stores in IndexedDB. There is no backend to hack, no database to leak, no server to pay for.
-
-> Zero infrastructure. Zero server cost. Zero data leaves your machine.
+ejobtrack removes the server entirely. Gmail API calls go direct from your browser. Classification happens locally. Storage is local. There is nothing to hack, nothing to leak, and no subscription to pay for.
 
 ---
 
 ## Features
 
-| Feature | What it does |
-|---|---|
-| **Gmail auto-sync** | Signs in with Google, scans inbox automatically. No manual entry. |
-| **Multi-platform parsing** | Dedicated extractors for JobStreet, LinkedIn, Indeed. Generic parser for 50+ ATS (Workday, Lever, Greenhouse, etc.) |
-| **ML-powered detection** | On-device Transformer model classifies emails from unknown senders. Falls back to keyword matching. |
-| **Status timeline** | Every status change tracked with source email. Applied → Viewed → Interview → Offer/Rejected. |
-| **Duplicate merge** | Same role from different platforms? Merge entries with full history. Reversible with 1 click. |
-| **Offline-first** | All data in IndexedDB. Works offline after sync. |
-| **Privacy by design** | Your email never reaches another machine. Architectural guarantee, not a policy promise. |
+| Feature | How | Benefit |
+|---|---|---|
+| **Architectural privacy** | No backend, no database, data never leaves your browser | Your emails stay on your device. Nothing to leak. |
+| **Gmail auto-sync** | One OAuth sign-in triggers automatic inbox scan | No typing, no CSV imports, no manual entry |
+| **Multi-platform parsing** | Dedicated parsers for JobStreet, LinkedIn, Indeed. Generic parser for 50+ ATS | Works with any platform out of the box |
+| **On-device ML** | Transformers.js classifies unknown senders locally with keyword fallback | No API calls to OpenAI. No data sent for analysis. Free and private. |
+| **Status timeline** | Every status change tracked with source email ID and timestamp | See Applied → Viewed → Interview → Offer/Rejected with one click |
+| **Duplicate merge** | Normalized title matching with fuzzy company comparison | Same role from multiple platforms merged with full undo |
+| **Offline-first** | All data in IndexedDB with compound indexes | Works without a network after first sync |
+| **Fully auditable** | Open source static build with no server-side code | Inspect the network tab. Zero unexpected requests. |
+
+Only network calls: Gmail API (read-only) + optional PostHog (anonymized event names, opt-in, proxied).
+Open DevTools and verify yourself.
 
 ---
 
 ## Screenshots
 
-| Dashboard | Timeline |
-|---|---|
-| ![Dashboard](screenshots/dashboard.png) | ![Timeline](screenshots/timeline.png) |
-| **Duplicates** | **Hidden Jobs** |
+| Dashboard                                 | Timeline                                    |
+| ----------------------------------------- | ------------------------------------------- |
+| ![Dashboard](screenshots/dashboard.png)   | ![Timeline](screenshots/timeline.png)       |
+| **Duplicates**                            | **Hidden Jobs**                             |
 | ![Duplicates](screenshots/duplicates.png) | ![Hidden Jobs](screenshots/hidden-jobs.png) |
 
 ---
@@ -109,39 +99,85 @@ Email sync checks every 15 minutes and on tab focus. Rate limits handled with re
 
 ## Supported Platforms
 
-| Platform | Parser |
-|---|---|
-| **JobStreet** | Dedicated — bulk weekly summaries, multi-job emails |
-| **LinkedIn** | Dedicated — applications, views, rejections, interviews |
-| **Indeed** | Dedicated — application updates |
-| **50+ ATS** | Generic — Workday, Lever, Greenhouse, SmartRecruiters, Ashby, BambooHR, iCIMS, Jobvite, Workable |
+| Platform | Type | Scope |
+|---|---|---|
+| **JobStreet** | Dedicated | Bulk weekly summaries, multi-job emails |
+| **LinkedIn** | Dedicated | Applications, views, rejections, interviews |
+| **Indeed** | Dedicated | Application updates |
+| **50+ ATS** | Generic | Workday, Lever, Greenhouse, SmartRecruiters, Ashby, BambooHR, iCIMS, Jobvite, Workable |
 
 ---
 
 ## Tech Stack
 
-| Layer | What | Why |
-|---|---|---|
-| UI | React 19 + TypeScript | Stable, large ecosystem |
-| Routing | TanStack Router + Zod | Type-safe search params |
-| Styling | shadcn/ui + coss | Zero-runtime, dark mode |
-| Build | Vite | Fast |
-| Storage | Dexie.js (IndexedDB) | Offline-first, compound indexes |
-| Auth | Google Identity Services | OAuth 2.0, no backend tokens |
-| Email | Gmail REST API | `gmail.readonly`, paginated |
-| ML | @xenova/transformers | On-device, free, private |
-| Host | Cloudflare Pages | Static deploy, zero config |
-| Analytics | PostHog (opt-in, proxied) | Anonymized events only |
+| Layer     | What                      | Why                             |
+| --------- | ------------------------- | ------------------------------- |
+| UI        | React 19 + TypeScript     | Stable, large ecosystem         |
+| Routing   | TanStack Router + Zod     | Type-safe search params         |
+| Styling   | shadcn/ui + coss          | Zero-runtime, dark mode         |
+| Build     | Vite                      | Fast                            |
+| Storage   | Dexie.js (IndexedDB)      | Offline-first, compound indexes |
+| Auth      | Google Identity Services  | OAuth 2.0, no backend tokens    |
+| Email     | Gmail REST API            | `gmail.readonly`, paginated     |
+| ML        | @xenova/transformers      | On-device, free, private        |
+| Host      | Cloudflare Pages          | Static deploy, zero config      |
+| Analytics | PostHog (opt-in, proxied) | Anonymized events only          |
 
 ---
 
-## Trade-offs
+## Design Decisions
 
-- **No push notifications** → Zero server cost, no data leaves browser
-- **No cross-device sync** → Clear privacy boundary
-- **Gmail only** → Focused, well-documented API
-- **IndexedDB limits** → Stays under cap for typical job hunts
-- **ML accuracy** → Free, private, offline, degrades to keyword matching
+These are intentional constraints that keep your data inside your browser.
+
+| Decision                  | Why we chose it                                                                              |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| **No push notifications** | Requires a server to hold your tokens and relay Google Pub/Sub events. We don't hold tokens. |
+| **No cross-device sync**  | Would require a central database. Your data stays on one machine by design.                  |
+| **Gmail only**            | Focused scope, well-documented API, and we can guarantee the direct-client flow.             |
+| **IndexedDB limits**      | For typical job hunts, local storage is sufficient. Export/import is planned for backups.    |
+| **On-device ML accuracy** | Free, private, offline. Degrades gracefully to keyword matching when the model is uncertain. |
+
+---
+
+## Roadmap
+
+| Feature                                                                                                               | Status         |
+| --------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **Data export/import:** JSON backup and restore so your data is never locked in. | 🚧 In progress |
+| **Saved filter presets:** bookmark combos like "Interview stage + this week." | 📋 Planned |
+| **Analytics dashboard:** view applications per week, interview conversion rate, and response time distribution. | 📋 Planned |
+| **Calendar view:** interview dates extracted from emails with one-click Google Calendar add. | 📋 Planned |
+| **Custom status labels:** define your own pipeline stages like Phone Screen, Take-home, or Final Round. | 📋 Planned |
+| **Outlook / Microsoft Graph API:** same read-only OAuth flow and parser pipeline with zero-server architecture. | 📋 Planned |
+| **PWA install:** manifest and service worker. Already offline, just needs the install layer. | 📋 Planned |
+| **In-app changelog:** release notes shown on first load after update. | 📋 Planned |
+
+**Architectural non-goals:** Push notifications, cross-device sync, and server-side ML will never ship. Any feature that requires a backend is out of scope.
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/Ralph-Abejuela/ejobtrack.git
+cd ejobtrack
+pnpm install
+```
+
+Copy `.env.example` to `.env`, add your Google Client ID, then:
+
+```bash
+pnpm dev     # local dev at localhost:5173
+pnpm build   # static dist/ for any host
+```
+
+**Prerequisites:** Node.js 22+, pnpm, a Google Cloud Project with Gmail API enabled.
+
+---
+
+## Contributing
+
+PRs welcome. Add your platform parser as one file in `src/lib/jobs/`. See `generic.ts` for the pattern.
 
 ---
 
