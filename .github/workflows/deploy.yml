@@ -44,7 +44,8 @@ jobs:
       - name: Build
         run: pnpm run build
         env:
-          CUSTOM_DOMAIN: "yourdomain.com" # ← replace with your actual domain
+          VITE_GOOGLE_CLIENT_ID: ${{secrets.VITE_GOOGLE_CLIENT_ID}}
+          VITE_POSTHOG_KEY: ${{secrets.VITE_POSTHOG_KEY}}
       - name: Setup Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
       - name: Upload artifact
